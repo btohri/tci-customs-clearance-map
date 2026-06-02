@@ -2,6 +2,7 @@
 
 > 本文件為 Phase 2，請先完成 Phase 1（Supabase 建立 + 登入系統）再進行。
 > 將本文件完整交給 GPT，請它依照規格逐一產出程式碼。
+> 目前狀態：查詢介面、後台輸入、歷史管理、角色管理、國家/劑型正規化皆已完成。
 
 ---
 
@@ -81,8 +82,18 @@ tci-customs-map/
 ### 劑型選項（固定清單）
 
 ```
-Capsule / Tablet / Powder / Gummy / Liquid / Softgel / Others
+膠囊 Capsule / 錠劑 Tablet / 粉劑 Powder / 軟糖 Gummy / 液體 Liquid / 軟膠囊 Softgel / 面膜 Mask / 其他 Others
 ```
+
+資料庫仍存英文穩定值：`Capsule`、`Tablet`、`Powder`、`Gummy`、`Liquid`、`Softgel`、`Mask`、`Others`。
+
+### 國家正規化
+
+- 後台輸入、查詢、地圖風險摘要共用 `api.js` 的國家正規化邏輯。
+- 常見縮寫、英文與中文會視為同一國家，例如：
+  - `US` / `USA` / `United States` / `美國` → `USA`
+  - `CN` / `China` / `中國` → `China`
+  - `KR` / `South Korea` / `韓國` → `Korea`
 
 ### 風險燈號顯示邏輯
 
@@ -151,6 +162,13 @@ async function getBrokers(country, port) {
   └── 顯示所有通關紀錄
   └── 每筆可編輯 / 刪除
   └── 支援依國家篩選
+
+使用者角色管理（admin only）
+  └── 建立新帳號並指定角色
+  └── 以下拉選單選擇既有帳號
+  └── 修改既有帳號角色
+  └── 刪除既有帳號
+  └── 顯示已建立使用者與角色清單
 ```
 
 ### api.js 新增函式
@@ -176,6 +194,18 @@ async function deleteRecord(id) {
 async function getAllRecords() {
   // select * from customs_records order by last_updated desc
 }
+
+// 建立帳號（Edge Function 優先，失敗時使用 signUp fallback）
+async function createUserAccount(email, password, role) { ... }
+
+// 列出使用者角色
+async function listUserRoleAssignments() { ... }
+
+// 依 Email 指派角色
+async function assignUserRoleByEmail(email, role) { ... }
+
+// 依 Email 刪除帳號
+async function deleteUserByEmail(email) { ... }
 ```
 
 ---
@@ -197,7 +227,11 @@ async function getAllRecords() {
 ## 注意事項
 
 - 國家與口岸下拉選單需支援「手動輸入新值」，因為 Shipping team 可能出貨到尚未有紀錄的國家
+- 國家輸入會先正規化後儲存，避免 `US`、`USA`、`美國` 被視為不同資料
+- 劑型以下拉固定值儲存，畫面顯示中英文對照
 - 所需文件欄位以逗號分隔儲存，顯示時拆分為標籤
 - 送出表單前需驗證必填欄位（國家、口岸、劑型、通關結果、天數、文件）
 - 刪除紀錄前需顯示確認對話框
 - 所有操作成功/失敗需顯示提示訊息
+- 若角色 RPC 出現 `欄位參考「user_id」具有歧義`，請執行 `supabase_fix_user_role_rpc.sql`
+- 刪除帳號 RPC 會禁止 Admin 刪除自己，並清除通關紀錄 `created_by` 參照後再刪除 Auth user

@@ -291,6 +291,14 @@
     return data?.[0] || null;
   }
 
+  async function deleteUserByEmail(email) {
+    const { data, error } = await getClient().rpc('delete_user_by_email', {
+      target_email: String(email || '').trim().toLowerCase()
+    });
+    if (error) throw error;
+    return data?.[0] || null;
+  }
+
   async function isCurrentUserAdmin() {
     const { data, error } = await getClient().rpc('is_current_user_admin');
     if (error) throw error;
@@ -386,6 +394,7 @@
     listUserRoleAssignments,
     isCurrentUserAdmin,
     assignUserRoleByEmail,
+    deleteUserByEmail,
     createUserAccount
   };
 })();

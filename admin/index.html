@@ -129,7 +129,7 @@
       <div class="table-toolbar">
         <div>
           <h2>使用者角色管理</h2>
-          <p class="hint">Admin 可直接建立新帳號，也可修改既有帳號角色。</p>
+          <p class="hint">Admin 可直接建立新帳號，也可修改或刪除既有帳號。</p>
         </div>
       </div>
 
@@ -157,7 +157,9 @@
       <form id="roleForm" class="role-form">
         <label>
           既有使用者 Email
-          <input id="roleEmailInput" type="email" placeholder="name@tci-bio.com" required>
+          <select id="roleEmailInput" required>
+            <option value="">請選擇使用者</option>
+          </select>
         </label>
         <label>
           角色
@@ -167,7 +169,8 @@
             <option value="admin">admin</option>
           </select>
         </label>
-        <button class="button primary" type="submit">儲存角色</button>
+        <button id="saveRoleButton" class="button primary" type="submit">儲存角色</button>
+        <button id="deleteUserButton" class="button danger" type="button">刪除帳號</button>
       </form>
       <p id="roleMessage" class="message" aria-live="polite"></p>
       <div class="table-scroll">

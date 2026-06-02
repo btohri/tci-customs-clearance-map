@@ -1,7 +1,7 @@
 # TCI Customs Clearance Map — V1 專案規格文件
 
 > 本文件供 AI（Cursor / Copilot / Claude）閱讀使用，也作為接手人員的 README。
-> 最後更新：2026-06-01
+> 最後更新：2026-06-02
 
 ---
 
@@ -48,16 +48,23 @@ Supabase → 保留不動
 tci-customs-map/
 ├── index.html          # 首頁（查詢介面）
 ├── login.html          # 登入頁面
+├── register.html       # 使用者自助註冊頁面
 ├── admin/
 │   └── index.html      # Shipping Team 後台（新增/編輯通關紀錄）
 ├── js/
 │   ├── api.js          # 所有 Supabase 呼叫集中於此（未來轉 Worker 只改這裡）
 │   ├── auth.js         # 登入、登出、Session 管理
 │   ├── search.js       # 查詢介面邏輯
+│   └── map.js          # Leaflet 世界地圖邏輯
+├── admin/js/
 │   └── admin.js        # 後台邏輯
+├── supabase/
+│   └── functions/
+│       └── create-user/index.ts # Admin 建立使用者 Edge Function
 ├── css/
 │   └── style.css       # 全站樣式
-└── README.md           # 本文件
+├── supabase_schema.sql # Supabase 初始化 SQL
+└── supabase_fix_user_role_rpc.sql # 角色 RPC 修補 SQL
 ```
 
 ---
@@ -74,8 +81,22 @@ const SUPABASE_ANON_KEY = 'your-anon-key'
 ### Auth 設定
 
 - 登入方式：Email + 密碼
+- 使用者可透過 `register.html` 自助註冊
 - 限制註冊信箱：僅允許 `@tci-bio.com`（於 Supabase Dashboard → Auth → Email 設定 allowed domains）
 - Session 保留：預設 1 小時，可延長
+- 新註冊帳號預設為 `user`，可查詢；`shipping` / `admin` 由 Admin 後台指派
+- 若 Supabase 啟用 Email 驗證，使用者須依驗證信完成後才能登入
+
+### Edge Function / 角色管理
+
+- `supabase/functions/create-user/index.ts` 可讓 Admin 建立新帳號並直接指派角色。
+- 若 Edge Function 尚未部署或連線失敗，前端已有 fallback：確認目前登入者為 Admin 後，使用 Supabase `signUp` 建立帳號，再透過 RPC 指派角色。
+- 角色管理 RPC 包含：
+  - `is_current_user_admin()`
+  - `list_user_role_assignments()`
+  - `assign_user_role_by_email(target_email, target_role)`
+  - `delete_user_by_email(target_email)`
+- 若資料庫出現 `欄位參考「user_id」具有歧義`，請在 Supabase SQL Editor 執行 `supabase_fix_user_role_rpc.sql`。
 
 ---
 
@@ -172,7 +193,7 @@ create policy "shipping 可編輯" on customs_records
 | shipping | 船務部門 | 新增、編輯通關紀錄，維護燈號 |
 | admin | 系統管理員 | 所有權限 + 使用者管理 |
 
-> 角色由 Admin 在 `user_roles` 表手動設定，新註冊預設為 `user`。
+> 新註冊預設為 `user`。Shipping / Admin 權限由 Admin 在後台「使用者角色管理」指派。
 
 ---
 
@@ -183,6 +204,14 @@ create policy "shipping 可編輯" on customs_records
 ```
 選擇國家 → 選擇口岸（動態根據國家載入）→ 選擇劑型 → 顯示結果
 ```
+
+### 目前已完成
+
+- 支援地圖檢視與清單檢視 Tab。
+- 地圖使用 Leaflet + GeoJSON，依各國最高風險等級上色。
+- 國家欄位支援常見縮寫、英文、中文正規化，例如 `US` / `USA` / `美國` 會視為同一國家。
+- 劑型下拉與結果顯示採中英文對照，資料庫仍存穩定英文值。
+- 目前劑型：膠囊 Capsule、錠劑 Tablet、粉劑 Powder、軟糖 Gummy、液體 Liquid、軟膠囊 Softgel、面膜 Mask、其他 Others。
 
 ### 顯示內容
 
@@ -211,6 +240,12 @@ create policy "shipping 可編輯" on customs_records
 | 曾扣關 | 勾選框 | — |
 | 曾延遲 | 勾選框 | — |
 | 備註 | 選填文字 | — |
+
+### 後台角色管理
+
+- Admin 可建立新帳號並指定 `user` / `shipping` / `admin`。
+- Admin 可由既有使用者下拉選單修改角色或刪除帳號。
+- 使用者也可自行註冊，Admin 只需在需要時調整角色。
 
 ---
 
@@ -251,18 +286,24 @@ export async function getPorts(country) { ... }
 export async function getBrokers(country) { ... }
 ```
 
+目前 `api.js` 也包含：
+
+- `signUp(email, password)`：自助註冊
+- `normalizeCountry()` / `displayCountry()`：國家縮寫、英文、中文正規化與顯示
+- `normalizeDosageForm()` / `displayDosageForm()`：劑型中英文對照
+- `listUserRoleAssignments()` / `assignUserRoleByEmail()` / `deleteUserByEmail()`：後台角色管理
+- `createUserAccount()`：Admin 建立帳號，含 Edge Function fallback
+
 ---
 
 ## 開發順序建議
 
-1. Supabase 建立專案，執行 SQL 建立資料表
-2. 建立 `login.html` + `auth.js`，完成登入流程
-3. 建立 `api.js`，實作基本查詢函式
-4. 建立 `index.html` + `search.js`，完成查詢介面
-5. 建立 `admin/index.html` + `admin.js`，完成後台輸入介面
-6. 設定 Supabase RLS 權限
-7. 部署至 GitHub Pages
-8. 測試三種角色的權限是否正確
+1. Supabase 建立專案，執行 `supabase_schema.sql` 建立資料表與 RPC
+2. 若角色 RPC 出現 `user_id` 歧義，執行 `supabase_fix_user_role_rpc.sql`
+3. GitHub Pages 部署前端
+4. Supabase Dashboard 設定 Email 網域限制與 Email 驗證策略
+5. 視需求部署 `create-user` Edge Function
+6. 測試 `user` / `shipping` / `admin` 三種角色權限
 
 ---
 
@@ -280,6 +321,8 @@ export async function getBrokers(country) { ... }
 - `SUPABASE_ANON_KEY` 為公開金鑰，可放在前端，但務必設定 RLS
 - 勿將 `service_role` key 放在前端任何地方
 - 所有寫入操作須驗證使用者角色（透過 RLS + user_roles 表）
+- `create-user` Edge Function 需要 `SUPABASE_SERVICE_ROLE_KEY`，只能放在 Supabase Function secrets，不可放前端
+- 資料庫 RPC 更新後需執行 `notify pgrst, 'reload schema';`，修補 SQL 已包含此句
 - GitHub repo 建議設為 **private**
 
 ---

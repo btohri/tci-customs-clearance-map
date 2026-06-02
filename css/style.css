@@ -603,7 +603,7 @@ tbody tr:hover {
 
 .role-form {
   display: grid;
-  grid-template-columns: minmax(240px, 1fr) 180px auto;
+  grid-template-columns: minmax(240px, 1fr) 180px auto auto;
   align-items: end;
   gap: 1rem;
   margin-bottom: 0.75rem;

@@ -2,6 +2,7 @@
 
 > 本文件為 Phase 3，請先完成 Phase 1 與 Phase 2 再進行。
 > 將本文件完整交給 GPT，請它依照規格逐一產出程式碼。
+> 目前狀態：Leaflet 地圖檢視已完成，並與國家正規化、劑型中英文對照共用同一套 API 邏輯。
 
 ---
 
@@ -73,8 +74,8 @@ https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json
 頂部導覽列（同 Phase 2）
 
 Tab 切換列
-  ├── 🗺️ 地圖檢視（新增）
-  └── 📋 清單檢視（Phase 2 原有）
+  ├── 地圖檢視（新增）
+  └── 清單檢視（Phase 2 原有）
 
 地圖區塊（地圖檢視 Tab）
   ├── 左側：Leaflet 世界地圖（約 70% 寬度）
@@ -114,16 +115,15 @@ async function getCountryRiskSummary() {
 
 GeoJSON 內的國家名稱（英文）需對應到 Supabase 的 `country` 欄位。
 
-建議在 `map.js` 建立一個對應表處理常見差異：
+目前已改由 `api.js` 統一處理國家正規化，地圖、清單查詢、後台共用同一套邏輯：
 
 ```js
-const countryNameMap = {
-  'United States of America': 'USA',
-  'South Korea': 'Korea',
-  'Viet Nam': 'Vietnam',
-  // 依實際資料補充
-}
+window.TCIApi.normalizeCountry(name)
+window.TCIApi.displayCountry(name)
+window.TCIApi.countryMatches(recordCountry, queryCountry)
 ```
+
+因此 GeoJSON 的 `United States of America`、資料庫的 `USA`、後台輸入的 `美國` 都會被視為同一國家。
 
 ---
 
@@ -176,14 +176,14 @@ async function refreshMapColors() {
 ### 狀態一：預設（未選擇國家）
 
 ```
-🗺️ 請點擊地圖上的國家開始查詢
+請點擊地圖上的國家開始查詢
 （圖示 + 提示文字，置中顯示）
 ```
 
 ### 狀態二：已選擇國家
 
 ```
-🇮🇩 Indonesia                    [風險燈號]
+Indonesia                    [風險燈號]
 
 選擇口岸：
   [Jakarta]  [Surabaya]  [+ 其他]
@@ -194,7 +194,7 @@ async function refreshMapColors() {
 ### 狀態三：已選擇口岸
 
 ```
-🇮🇩 Indonesia > Jakarta          [風險燈號]
+Indonesia > Jakarta          [風險燈號]
 
 選擇劑型：
   [Capsule ▼]
@@ -205,7 +205,7 @@ async function refreshMapColors() {
 ### 狀態四：查詢結果
 
 ```
-🇮🇩 Indonesia > Jakarta > Capsule
+Indonesia > Jakarta > Capsule
 
 🟢 Green
 
@@ -262,5 +262,7 @@ async function refreshMapColors() {
 - 地圖初始化需在 DOM 完全載入後執行（`DOMContentLoaded`）
 - Leaflet 地圖容器需有明確高度，否則不會顯示
 - 國家名稱對應表需依實際 Supabase 資料中的 country 欄位值調整
+- 目前國家名稱對應已集中在 `api.js`，地圖不再維護獨立對應表
+- 地圖側欄劑型下拉使用中英文對照，例如 `面膜 Mask`
 - 切換 Tab 時地圖需呼叫 `map.invalidateSize()` 重新計算尺寸，否則會顯示異常
 - 地圖點擊與側欄查詢共用 Phase 2 的 `searchCustoms()` 函式，不需重複實作

@@ -93,8 +93,59 @@ begin
 end;
 $$;
 
+create or replace function public.delete_user_by_email(
+  target_email text
+)
+returns table (
+  user_id uuid,
+  email text
+)
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  target_user_id uuid;
+  normalized_email text;
+begin
+  if not public.is_current_user_admin() then
+    raise exception 'Only admin can delete users';
+  end if;
+
+  normalized_email := lower(trim(target_email));
+
+  select u.id, u.email::text
+  into target_user_id, normalized_email
+  from auth.users as u
+  where lower(u.email) = normalized_email
+  limit 1;
+
+  if target_user_id is null then
+    raise exception 'User email not found: %', target_email;
+  end if;
+
+  if target_user_id = auth.uid() then
+    raise exception 'Admin cannot delete the current signed-in user';
+  end if;
+
+  update public.customs_records as cr
+  set created_by = null
+  where cr.created_by = target_user_id;
+
+  delete from public.user_roles as ur
+  where ur.user_id = target_user_id;
+
+  delete from auth.users as u
+  where u.id = target_user_id;
+
+  return query
+  select target_user_id, normalized_email::text;
+end;
+$$;
+
 grant execute on function public.is_current_user_admin() to authenticated;
 grant execute on function public.list_user_role_assignments() to authenticated;
 grant execute on function public.assign_user_role_by_email(text, text) to authenticated;
+grant execute on function public.delete_user_by_email(text) to authenticated;
 
 notify pgrst, 'reload schema';

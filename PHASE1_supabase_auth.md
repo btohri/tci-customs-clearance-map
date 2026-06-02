@@ -1,6 +1,7 @@
 # TCI Customs Clearance Map — Phase 1：Supabase 建立 + 登入系統
 
 > 將本文件完整交給 GPT，請它依照規格逐一產出程式碼。
+> 目前狀態：已完成登入、登出、改密碼、自助註冊與角色讀取流程。
 
 ---
 
@@ -36,6 +37,7 @@
 tci-customs-map/
 ├── index.html          # 首頁（暫時放登入檢查，導向 login.html）
 ├── login.html          # 登入頁面
+├── register.html       # 自助註冊頁面
 ├── js/
 │   ├── api.js          # 所有 Supabase 呼叫集中於此
 │   └── auth.js         # 登入、登出、Session 管理
@@ -170,12 +172,25 @@ create policy "使用者可查詢自己的角色" on user_roles
 - 錯誤訊息顯示區
 - 登入成功後導向 `index.html`
 - 若已登入則自動導向 `index.html`
+- 提供前往 `register.html` 的建立帳號入口
+
+### register.html 功能
+
+- Email 輸入欄位
+- 密碼與確認密碼欄位
+- 密碼至少 6 碼，送出前檢查兩次密碼一致
+- 呼叫 Supabase `auth.signUp`
+- 若 Supabase 啟用 Email 驗證，註冊後提示使用者依信件完成驗證
+- 新註冊帳號預設一般 `user` 權限，Shipping / Admin 權限由 Admin 後台指派
 
 ### auth.js 需實作的函式
 
 ```js
 // 登入
 async function signIn(email, password) { ... }
+
+// 註冊
+async function signUp(email, password) { ... }
 
 // 登出
 async function signOut() { ... }
@@ -218,5 +233,6 @@ async function requireShipping() { ... }
 
 - `SUPABASE_URL` 和 `SUPABASE_ANON_KEY` 請用佔位符，開發者自行替換
 - 信箱限制 `@tci-bio.com` 須在 Supabase Dashboard → Authentication → Settings 設定，非程式碼控制
-- 新註冊使用者預設角色為 `user`，需 Admin 至 Supabase Dashboard 手動在 `user_roles` 表新增角色
+- 新註冊使用者預設角色為 `user`；目前已可由 Admin 後台角色管理指派 `shipping` / `admin`
 - 勿使用 `service_role` key，一律使用 `anon` key + RLS 控制權限
+- 若 Admin 建立帳號功能的 Edge Function 尚未部署，前端會 fallback 到自助註冊流程並透過 RPC 指派角色
