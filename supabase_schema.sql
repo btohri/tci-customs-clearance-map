@@ -107,9 +107,9 @@ set search_path = public
 as $$
   select exists (
     select 1
-    from public.user_roles
-    where user_id = auth.uid()
-    and role = 'admin'
+    from public.user_roles as ur
+    where ur.user_id = auth.uid()
+    and ur.role = 'admin'
   );
 $$;
 
@@ -133,11 +133,11 @@ begin
   select
     u.id as user_id,
     u.email::text as email,
-    coalesce(user_roles.role, 'user')::text as role,
+    coalesce(ur.role, 'user')::text as role,
     u.created_at
   from auth.users as u
-  left join public.user_roles
-    on user_roles.user_id = u.id
+  left join public.user_roles as ur
+    on ur.user_id = u.id
   order by u.created_at desc;
 end;
 $$;
@@ -176,10 +176,14 @@ begin
     raise exception 'User email not found: %', target_email;
   end if;
 
-  insert into public.user_roles (user_id, role)
-  values (target_user_id, target_role)
-  on conflict (user_id)
-  do update set role = excluded.role;
+  update public.user_roles as ur
+  set role = target_role
+  where ur.user_id = target_user_id;
+
+  if not found then
+    insert into public.user_roles (user_id, role)
+    values (target_user_id, target_role);
+  end if;
 
   return query
   select target_user_id, target_email::text, target_role::text;
