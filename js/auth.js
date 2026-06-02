@@ -46,7 +46,15 @@
 
   function authErrorMessage(error) {
     const message = String(error?.message || '');
+    const errorText = (() => {
+      try {
+        return JSON.stringify(error || {});
+      } catch {
+        return '';
+      }
+    })();
     const lowerMessage = message.toLowerCase();
+    const lowerErrorText = errorText.toLowerCase();
     if (lowerMessage.includes('email rate limit exceeded')) {
       return '驗證信寄送次數過多，請稍後再試；若急需開通，請請 Admin 從後台建立帳號。';
     }
@@ -61,6 +69,16 @@
     }
     if (lowerMessage.includes('password')) {
       return '密碼不符合系統規則，請至少輸入 6 碼。';
+    }
+    if (
+      !message ||
+      message === '{}' ||
+      lowerMessage.includes('fetch') ||
+      lowerMessage.includes('retryable') ||
+      lowerErrorText.includes('authretryablefetcherror') ||
+      errorText === '{}'
+    ) {
+      return '註冊服務暫時無法送出驗證信，請確認 Supabase SMTP / Email 驗證設定，或請 Admin 從後台建立帳號。';
     }
     return message || '操作失敗，請稍後再試。';
   }
