@@ -174,8 +174,10 @@
       const role = field('newUserRoleSelect').value;
       try {
         createUserMessage('建立中...');
-        await window.TCIApi.createUserAccount(email, password, role);
-        createUserMessage('帳號已建立，角色已完成指派。', 'success');
+        const created = await window.TCIApi.createUserAccount(email, password, role);
+        createUserMessage(created?.fallback
+          ? '帳號已建立，角色已完成指派。若帳號尚未驗證，請使用者依信件完成驗證。'
+          : '帳號已建立，角色已完成指派。', 'success');
         field('createUserForm').reset();
         await loadRoleAssignments();
       } catch (error) {

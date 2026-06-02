@@ -282,11 +282,68 @@
     return data?.[0] || null;
   }
 
-  async function createUserAccount(email, password, role) {
-    const { data, error } = await getClient().functions.invoke('create-user', {
-      body: { email, password, role }
-    });
+  async function isCurrentUserAdmin() {
+    const { data, error } = await getClient().rpc('is_current_user_admin');
     if (error) throw error;
+    return Boolean(data);
+  }
+
+  function canUseSignUpFallback(error) {
+    const message = String(error?.message || '').toLowerCase();
+    return (
+      error?.name === 'FunctionsFetchError' ||
+      message.includes('edge function') ||
+      message.includes('failed to send') ||
+      message.includes('未能向 edge 函式發送請求')
+    );
+  }
+
+  async function createUserWithSignUpFallback(email, password, role, originalError) {
+    if (!(await isCurrentUserAdmin())) {
+      throw originalError;
+    }
+
+    const authClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+        storageKey: `tci-create-user-${Date.now()}`
+      }
+    });
+
+    const { data: signUpData, error: signUpError } = await authClient.auth.signUp({
+      email,
+      password
+    });
+    if (signUpError) throw signUpError;
+
+    await assignUserRoleByEmail(email, role);
+
+    return {
+      user_id: signUpData.user?.id || null,
+      email,
+      role,
+      fallback: true
+    };
+  }
+
+  async function createUserAccount(email, password, role) {
+    const payload = {
+      email: String(email || '').trim().toLowerCase(),
+      password,
+      role
+    };
+
+    const { data, error } = await getClient().functions.invoke('create-user', {
+      body: payload
+    });
+    if (error) {
+      if (canUseSignUpFallback(error)) {
+        return createUserWithSignUpFallback(payload.email, payload.password, payload.role, error);
+      }
+      throw error;
+    }
     if (data?.error) throw new Error(data.error);
     return data;
   }
@@ -317,6 +374,7 @@
     getAllRecords,
     getCountryRiskSummary,
     listUserRoleAssignments,
+    isCurrentUserAdmin,
     assignUserRoleByEmail,
     createUserAccount
   };
