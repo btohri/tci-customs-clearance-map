@@ -88,7 +88,7 @@
     element.innerHTML = `
       <div class="risk-line">
         <div>
-          <p class="eyebrow">${escapeHtml(context.country || records[0].country)} / ${escapeHtml(context.port || records[0].port)} / ${escapeHtml(context.dosageForm || records[0].dosage_form)}</p>
+          <p class="eyebrow">${escapeHtml(window.TCIApi.displayCountry(context.country || records[0].country))} / ${escapeHtml(context.port || records[0].port)} / ${escapeHtml(window.TCIApi.displayDosageForm(context.dosageForm || records[0].dosage_form))}</p>
           <h2>${riskIcon(risk)} ${riskText(risk)}</h2>
         </div>
         <span class="risk-badge risk-${risk}">${riskText(risk)}</span>
@@ -139,7 +139,7 @@
   function fillDosageForms(select) {
     if (!select) return;
     select.innerHTML = '<option value="">請選擇劑型</option>' + window.TCIApi.dosageForms
-      .map((form) => `<option value="${form}">${form}</option>`)
+      .map((form) => `<option value="${escapeHtml(form.value)}">${escapeHtml(window.TCIApi.displayDosageForm(form.value))}</option>`)
       .join('');
   }
 
@@ -148,7 +148,7 @@
     if (!select) return;
     const countries = await window.TCIApi.getCountries();
     select.innerHTML = '<option value="">請選擇國家</option>' + countries
-      .map((country) => `<option value="${escapeHtml(country)}">${escapeHtml(country)}</option>`)
+      .map((country) => `<option value="${escapeHtml(country)}">${escapeHtml(window.TCIApi.displayCountry(country))}</option>`)
       .join('');
   }
 

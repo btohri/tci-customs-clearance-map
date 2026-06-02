@@ -40,9 +40,9 @@
 
   function getFormData() {
     return {
-      country: field('countryInput').value.trim(),
+      country: window.TCIApi.normalizeCountry(field('countryInput').value),
       port: field('portInput').value.trim(),
-      dosage_form: field('dosageFormInput').value,
+      dosage_form: window.TCIApi.normalizeDosageForm(field('dosageFormInput').value),
       clearance_result: field('clearanceResultInput').value,
       clearance_days: Number(field('clearanceDaysInput').value),
       required_documents: field('requiredDocumentsInput').value.trim(),
@@ -57,9 +57,9 @@
 
   function setFormData(record) {
     field('recordId').value = record.id || '';
-    field('countryInput').value = record.country || '';
+    field('countryInput').value = window.TCIApi.displayCountry(record.country || '');
     field('portInput').value = record.port || '';
-    field('dosageFormInput').value = record.dosage_form || '';
+    field('dosageFormInput').value = window.TCIApi.normalizeDosageForm(record.dosage_form || '');
     field('clearanceResultInput').value = record.clearance_result || '';
     field('clearanceDaysInput').value = record.clearance_days || '';
     field('requiredDocumentsInput').value = record.required_documents || '';
@@ -86,23 +86,29 @@
   }
 
   function renderDatalists() {
-    const countries = [...new Set(records.map((record) => record.country).filter(Boolean))].sort();
+    const countries = [...new Set(records.map((record) => window.TCIApi.normalizeCountry(record.country)).filter(Boolean))].sort();
     const ports = [...new Set(records.map((record) => record.port).filter(Boolean))].sort();
-    field('countryList').innerHTML = countries.map((country) => `<option value="${window.TCISearch.escapeHtml(country)}"></option>`).join('');
+    const countryOptions = countries.flatMap((country) => [
+      window.TCIApi.displayCountry(country),
+      window.TCIApi.normalizeCountry(country)
+    ]);
+    field('countryList').innerHTML = [...new Set(countryOptions)]
+      .map((country) => `<option value="${window.TCISearch.escapeHtml(country)}"></option>`)
+      .join('');
     field('portList').innerHTML = ports.map((port) => `<option value="${window.TCISearch.escapeHtml(port)}"></option>`).join('');
     field('adminCountryFilter').innerHTML = '<option value="">全部國家</option>' + countries
-      .map((country) => `<option value="${window.TCISearch.escapeHtml(country)}">${window.TCISearch.escapeHtml(country)}</option>`)
+      .map((country) => `<option value="${window.TCISearch.escapeHtml(country)}">${window.TCISearch.escapeHtml(window.TCIApi.displayCountry(country))}</option>`)
       .join('');
   }
 
   function renderTable() {
     const filter = field('adminCountryFilter').value;
-    const rows = records.filter((record) => !filter || record.country === filter);
+    const rows = records.filter((record) => !filter || window.TCIApi.countryMatches(record.country, filter));
     field('recordsTableBody').innerHTML = rows.map((record) => `
       <tr>
-        <td>${window.TCISearch.escapeHtml(record.country)}</td>
+        <td>${window.TCISearch.escapeHtml(window.TCIApi.displayCountry(record.country))}</td>
         <td>${window.TCISearch.escapeHtml(record.port)}</td>
-        <td>${window.TCISearch.escapeHtml(record.dosage_form)}</td>
+        <td>${window.TCISearch.escapeHtml(window.TCIApi.displayDosageForm(record.dosage_form))}</td>
         <td>${window.TCISearch.escapeHtml(labels[record.clearance_result] || record.clearance_result)}</td>
         <td>${window.TCISearch.escapeHtml(record.clearance_days)}</td>
         <td>${window.TCISearch.escapeHtml(labels[record.risk_level] || record.risk_level)}</td>

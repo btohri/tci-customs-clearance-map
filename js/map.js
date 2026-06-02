@@ -2,20 +2,12 @@
   'use strict';
 
   const geoJsonUrl = 'https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson';
-  const countryNameMap = {
-    'United States of America': 'USA',
-    'South Korea': 'Korea',
-    'Viet Nam': 'Vietnam',
-    'Russian Federation': 'Russia',
-    'United Kingdom': 'UK'
-  };
-
   let map;
   let countryLayer;
   let riskSummary = {};
 
   function normalizeCountryName(name) {
-    return countryNameMap[name] || name;
+    return window.TCIApi?.normalizeCountry(name) || name;
   }
 
   function riskColors(risk) {
@@ -52,7 +44,7 @@
       const risk = riskSummary[country];
       document.getElementById('map-sidebar').innerHTML = `
         <div class="sidebar-title">
-          <h2>${window.TCISearch.escapeHtml(country)}</h2>
+          <h2>${window.TCISearch.escapeHtml(window.TCIApi.displayCountry(country))}</h2>
           <span class="risk-badge risk-${risk || 'none'}">${window.TCISearch.riskIcon(risk)} ${window.TCISearch.riskText(risk)}</span>
         </div>
         <h3>選擇口岸</h3>
@@ -71,7 +63,7 @@
   function onPortSelect(country, port) {
     document.getElementById('map-sidebar').innerHTML = `
       <div class="sidebar-title">
-        <h2>${window.TCISearch.escapeHtml(country)} > ${window.TCISearch.escapeHtml(port)}</h2>
+        <h2>${window.TCISearch.escapeHtml(window.TCIApi.displayCountry(country))} > ${window.TCISearch.escapeHtml(port)}</h2>
       </div>
       <form id="mapSearchForm" class="admin-form">
         <label>

@@ -10,8 +10,103 @@
     ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
     : null;
 
-  const dosageForms = ['Capsule', 'Tablet', 'Powder', 'Gummy', 'Liquid', 'Softgel', 'Others'];
+  const countryAliases = [
+    { value: 'USA', zh: '美國', aliases: ['US', 'USA', 'U.S.', 'U.S.A.', 'United States', 'United States of America', 'America', '美國', '美国'] },
+    { value: 'China', zh: '中國', aliases: ['CN', 'CHN', 'China', 'Mainland China', 'PRC', '中國', '中国', '大陸', '大陆'] },
+    { value: 'Taiwan', zh: '台灣', aliases: ['TW', 'TWN', 'Taiwan', '台灣', '台湾'] },
+    { value: 'Japan', zh: '日本', aliases: ['JP', 'JPN', 'Japan', '日本'] },
+    { value: 'Korea', zh: '韓國', aliases: ['KR', 'KOR', 'Korea', 'South Korea', 'Republic of Korea', '韓國', '韩国', '南韓', '南韩'] },
+    { value: 'Vietnam', zh: '越南', aliases: ['VN', 'VNM', 'Vietnam', 'Viet Nam', '越南'] },
+    { value: 'Thailand', zh: '泰國', aliases: ['TH', 'THA', 'Thailand', '泰國', '泰国'] },
+    { value: 'Malaysia', zh: '馬來西亞', aliases: ['MY', 'MYS', 'Malaysia', '馬來西亞', '马来西亚'] },
+    { value: 'Singapore', zh: '新加坡', aliases: ['SG', 'SGP', 'Singapore', '新加坡'] },
+    { value: 'Indonesia', zh: '印尼', aliases: ['ID', 'IDN', 'Indonesia', '印尼', '印度尼西亞', '印度尼西亚'] },
+    { value: 'Philippines', zh: '菲律賓', aliases: ['PH', 'PHL', 'Philippines', '菲律賓', '菲律宾'] },
+    { value: 'India', zh: '印度', aliases: ['IN', 'IND', 'India', '印度'] },
+    { value: 'Australia', zh: '澳洲', aliases: ['AU', 'AUS', 'Australia', '澳洲', '澳大利亞', '澳大利亚'] },
+    { value: 'New Zealand', zh: '紐西蘭', aliases: ['NZ', 'NZL', 'New Zealand', '紐西蘭', '新西兰'] },
+    { value: 'Canada', zh: '加拿大', aliases: ['CA', 'CAN', 'Canada', '加拿大'] },
+    { value: 'Mexico', zh: '墨西哥', aliases: ['MX', 'MEX', 'Mexico', '墨西哥'] },
+    { value: 'Brazil', zh: '巴西', aliases: ['BR', 'BRA', 'Brazil', '巴西'] },
+    { value: 'UK', zh: '英國', aliases: ['GB', 'GBR', 'UK', 'U.K.', 'United Kingdom', 'Great Britain', 'Britain', 'England', '英國', '英国'] },
+    { value: 'Germany', zh: '德國', aliases: ['DE', 'DEU', 'Germany', '德國', '德国'] },
+    { value: 'France', zh: '法國', aliases: ['FR', 'FRA', 'France', '法國', '法国'] },
+    { value: 'Italy', zh: '義大利', aliases: ['IT', 'ITA', 'Italy', '義大利', '意大利'] },
+    { value: 'Spain', zh: '西班牙', aliases: ['ES', 'ESP', 'Spain', '西班牙'] },
+    { value: 'Netherlands', zh: '荷蘭', aliases: ['NL', 'NLD', 'Netherlands', 'Holland', '荷蘭', '荷兰'] },
+    { value: 'Russia', zh: '俄羅斯', aliases: ['RU', 'RUS', 'Russia', 'Russian Federation', '俄羅斯', '俄罗斯'] },
+    { value: 'United Arab Emirates', zh: '阿聯酋', aliases: ['AE', 'ARE', 'UAE', 'United Arab Emirates', '阿聯酋', '阿联酋'] },
+    { value: 'Saudi Arabia', zh: '沙烏地阿拉伯', aliases: ['SA', 'SAU', 'Saudi Arabia', '沙烏地阿拉伯', '沙特阿拉伯'] },
+    { value: 'Turkey', zh: '土耳其', aliases: ['TR', 'TUR', 'Turkey', 'Turkiye', 'Türkiye', '土耳其'] }
+  ];
+  const countryAliasMap = countryAliases.reduce((map, country) => {
+    [country.value, country.zh, ...country.aliases].forEach((alias) => {
+      map.set(normalizeKey(alias), country);
+    });
+    return map;
+  }, new Map());
+  const dosageForms = [
+    { value: 'Capsule', zh: '膠囊', en: 'Capsule', aliases: ['膠囊', '胶囊'] },
+    { value: 'Tablet', zh: '錠劑', en: 'Tablet', aliases: ['錠劑', '锭剂', '片劑', '片剂'] },
+    { value: 'Powder', zh: '粉劑', en: 'Powder', aliases: ['粉劑', '粉剂', '粉末'] },
+    { value: 'Gummy', zh: '軟糖', en: 'Gummy', aliases: ['軟糖', '软糖'] },
+    { value: 'Liquid', zh: '液體', en: 'Liquid', aliases: ['液體', '液体'] },
+    { value: 'Softgel', zh: '軟膠囊', en: 'Softgel', aliases: ['軟膠囊', '软胶囊', '軟膠', '软胶'] },
+    { value: 'Mask', zh: '面膜', en: 'Mask', aliases: ['面膜', 'Facial Mask', 'Sheet Mask'] },
+    { value: 'Others', zh: '其他', en: 'Others', aliases: ['其他', 'Other'] }
+  ];
+  const dosageAliasMap = dosageForms.reduce((map, form) => {
+    [form.value, form.en, form.zh, ...form.aliases].forEach((alias) => {
+      map.set(normalizeKey(alias), form);
+    });
+    return map;
+  }, new Map());
   const riskRank = { green: 1, yellow: 2, red: 3 };
+
+  function normalizeKey(value) {
+    return String(value || '')
+      .trim()
+      .replace(/[.\s_-]+/g, '')
+      .toLowerCase();
+  }
+
+  function findAlias(map, value) {
+    const text = String(value || '').trim();
+    const direct = map.get(normalizeKey(text));
+    if (direct) return direct;
+    return text
+      .split(/[\s/()（）,，]+/)
+      .map((item) => map.get(normalizeKey(item)))
+      .find(Boolean);
+  }
+
+  function normalizeCountry(value) {
+    const country = findAlias(countryAliasMap, value);
+    return country?.value || String(value || '').trim();
+  }
+
+  function displayCountry(value) {
+    const country = findAlias(countryAliasMap, value);
+    return country ? `${country.zh} ${country.value}` : String(value || '').trim();
+  }
+
+  function countryMatches(recordCountry, queryCountry) {
+    return normalizeCountry(recordCountry) === normalizeCountry(queryCountry);
+  }
+
+  function normalizeDosageForm(value) {
+    const form = findAlias(dosageAliasMap, value);
+    return form?.value || String(value || '').trim();
+  }
+
+  function displayDosageForm(value) {
+    const form = findAlias(dosageAliasMap, value);
+    return form ? `${form.zh} ${form.en}` : String(value || '').trim();
+  }
+
+  function dosageMatches(recordForm, queryForm) {
+    return normalizeDosageForm(recordForm) === normalizeDosageForm(queryForm);
+  }
 
   function getClient() {
     if (!supabase) {
@@ -22,9 +117,9 @@
 
   function normalizeRecord(data) {
     return {
-      country: data.country,
+      country: normalizeCountry(data.country),
       port: data.port,
-      dosage_form: data.dosage_form || data.dosageForm,
+      dosage_form: normalizeDosageForm(data.dosage_form || data.dosageForm),
       forwarder: data.forwarder || null,
       broker: data.broker || null,
       clearance_result: data.clearance_result || data.clearanceResult,
@@ -84,40 +179,42 @@
       .select('country')
       .order('country');
     if (error) throw error;
-    return [...new Set((data || []).map((row) => row.country).filter(Boolean))];
+    return [...new Set((data || []).map((row) => normalizeCountry(row.country)).filter(Boolean))].sort();
   }
 
   async function getPorts(country) {
     const { data, error } = await getClient()
       .from('customs_records')
-      .select('port')
-      .eq('country', country)
+      .select('country, port')
       .order('port');
     if (error) throw error;
-    return [...new Set((data || []).map((row) => row.port).filter(Boolean))];
+    return [...new Set((data || [])
+      .filter((row) => countryMatches(row.country, country))
+      .map((row) => row.port)
+      .filter(Boolean))];
   }
 
   async function searchCustoms({ country, port, dosageForm }) {
     const { data, error } = await getClient()
       .from('customs_records')
       .select('*')
-      .eq('country', country)
       .eq('port', port)
-      .eq('dosage_form', dosageForm)
       .order('last_updated', { ascending: false });
     if (error) throw error;
-    return data || [];
+    return (data || []).filter((record) => (
+      countryMatches(record.country, country) &&
+      dosageMatches(record.dosage_form, dosageForm)
+    ));
   }
 
   async function getBrokers(country, port) {
     const { data, error } = await getClient()
       .from('broker_directory')
       .select('*')
-      .eq('country', country)
       .or(`port.eq.${port},port.is.null`)
       .order('broker_name');
     if (error) throw error;
-    return data || [];
+    return (data || []).filter((broker) => countryMatches(broker.country, country));
   }
 
   async function addRecord(data) {
@@ -161,9 +258,10 @@
     const { data, error } = await getClient().from('customs_records').select('country, risk_level');
     if (error) throw error;
     return (data || []).reduce((summary, row) => {
-      const current = summary[row.country];
+      const country = normalizeCountry(row.country);
+      const current = summary[country];
       if (!current || riskRank[row.risk_level] > riskRank[current]) {
-        summary[row.country] = row.risk_level;
+        summary[country] = row.risk_level;
       }
       return summary;
     }, {});
@@ -195,6 +293,13 @@
 
   window.TCIApi = {
     dosageForms,
+    countryAliases,
+    normalizeCountry,
+    displayCountry,
+    countryMatches,
+    normalizeDosageForm,
+    displayDosageForm,
+    dosageMatches,
     getClient,
     getSession,
     getCurrentUser,
