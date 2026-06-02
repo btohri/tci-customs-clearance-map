@@ -44,6 +44,27 @@
     return window.TCIApi.getUserRole(userId);
   }
 
+  function authErrorMessage(error) {
+    const message = String(error?.message || '');
+    const lowerMessage = message.toLowerCase();
+    if (lowerMessage.includes('email rate limit exceeded')) {
+      return '驗證信寄送次數過多，請稍後再試；若急需開通，請請 Admin 從後台建立帳號。';
+    }
+    if (lowerMessage.includes('user already registered') || lowerMessage.includes('already registered')) {
+      return '此 Email 已註冊，請直接回到登入頁登入。';
+    }
+    if (lowerMessage.includes('signup is disabled')) {
+      return '目前系統未開放自助註冊，請請 Admin 協助建立帳號。';
+    }
+    if (lowerMessage.includes('invalid email')) {
+      return 'Email 格式不正確，請確認後再送出。';
+    }
+    if (lowerMessage.includes('password')) {
+      return '密碼不符合系統規則，請至少輸入 6 碼。';
+    }
+    return message || '操作失敗，請稍後再試。';
+  }
+
   async function requireAuth() {
     const session = await window.TCIApi.getSession();
     if (!session) {
@@ -120,6 +141,7 @@
 
     document.getElementById('registerForm')?.addEventListener('submit', async (event) => {
       event.preventDefault();
+      const submitButton = document.getElementById('registerSubmitButton');
       message.textContent = '建立帳號中...';
       message.className = 'message';
       const email = document.getElementById('registerEmail').value.trim();
@@ -138,6 +160,7 @@
       }
 
       try {
+        if (submitButton) submitButton.disabled = true;
         const data = await signUp(email, password);
         if (data.session) {
           message.textContent = '註冊成功，正在前往查詢頁。';
@@ -149,8 +172,10 @@
         message.className = 'message success';
         document.getElementById('registerForm').reset();
       } catch (error) {
-        message.textContent = error.message;
+        message.textContent = authErrorMessage(error);
         message.className = 'message error';
+      } finally {
+        if (submitButton) submitButton.disabled = false;
       }
     });
   }
