@@ -1,0 +1,11 @@
+.DS_Store
+Thumbs.db
+
+# Supabase local dev cache
+.branches/
+.temp/
+
+# Local env / secrets
+.env
+.env.*
+!.env.example

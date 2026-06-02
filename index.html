@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TCI 通關地圖</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="search">
+  <header class="topbar">
+    <a class="brand" href="index.html">
+      <img src="TCI.png" alt="TCI">
+      <span>通關地圖</span>
+    </a>
+    <nav class="nav-links">
+      <a aria-current="page" href="index.html">查詢</a>
+      <a id="adminNavLink" href="admin/index.html" hidden>後台</a>
+    </nav>
+    <div class="user-area">
+      <span id="userMeta">載入中...</span>
+      <button id="changePasswordButton" class="button ghost" type="button">修改密碼</button>
+      <button id="signOutButton" class="button ghost" type="button">登出</button>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <section class="page-heading">
+      <div>
+        <p class="eyebrow">TCI Customs Clearance Knowledge Base</p>
+        <h1>全球通關查詢</h1>
+      </div>
+      <span class="brand-chip">Internal Logistics Intelligence</span>
+    </section>
+
+    <div class="tabs" role="tablist" aria-label="查詢模式">
+      <button id="mapTab" class="tab-button active" type="button" role="tab" aria-selected="true" data-view="map">地圖檢視</button>
+      <button id="listTab" class="tab-button" type="button" role="tab" aria-selected="false" data-view="list">清單檢視</button>
+    </div>
+
+    <section id="mapView" class="view-panel active" aria-labelledby="mapTab">
+      <div id="map-container">
+        <div id="map" aria-label="世界通關風險地圖"></div>
+        <aside id="map-sidebar" aria-live="polite">
+          <div class="empty-state">
+            <strong>請點擊地圖上的國家開始查詢</strong>
+            <span>地圖顏色依目前通關紀錄最高風險顯示。</span>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="listView" class="view-panel" aria-labelledby="listTab" hidden>
+      <form id="searchForm" class="filter-card">
+        <label>
+          國家
+          <select id="countrySelect" required>
+            <option value="">請選擇國家</option>
+          </select>
+        </label>
+        <label>
+          口岸
+          <select id="portSelect" required disabled>
+            <option value="">請先選擇國家</option>
+          </select>
+        </label>
+        <label>
+          劑型
+          <select id="dosageFormSelect" required>
+            <option value="">請選擇劑型</option>
+          </select>
+        </label>
+        <button class="button primary" type="submit">查詢</button>
+      </form>
+
+      <section id="resultPanel" class="result-card" aria-live="polite">
+        <div class="empty-state">
+          <strong>請選擇條件後查詢</strong>
+          <span>結果會顯示風險燈號、文件、Broker 與歷史紀錄。</span>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div id="passwordDialog" class="modal-backdrop" hidden>
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="passwordDialogTitle">
+      <h2 id="passwordDialogTitle">修改密碼</h2>
+      <form id="passwordForm">
+        <label>
+          新密碼
+          <input id="newPassword" type="password" autocomplete="new-password" minlength="6" required>
+        </label>
+        <label>
+          再輸入一次
+          <input id="confirmPassword" type="password" autocomplete="new-password" minlength="6" required>
+        </label>
+        <div class="modal-actions">
+          <button class="button primary" type="submit">儲存新密碼</button>
+          <button id="cancelPasswordButton" class="button ghost" type="button">取消</button>
+        </div>
+      </form>
+      <p id="passwordMessage" class="message" aria-live="polite"></p>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/search.js"></script>
+  <script src="js/map.js"></script>
+</body>
+</html>

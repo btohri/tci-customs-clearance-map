@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>後台 | TCI 通關地圖</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body data-page="admin">
+  <header class="topbar">
+    <a class="brand" href="../index.html">
+      <img src="../TCI.png" alt="TCI">
+      <span>通關地圖</span>
+    </a>
+    <nav class="nav-links">
+      <a href="../index.html">查詢</a>
+      <a id="adminNavLink" aria-current="page" href="index.html">後台</a>
+    </nav>
+    <div class="user-area">
+      <span id="userMeta">載入中...</span>
+      <button id="changePasswordButton" class="button ghost" type="button">修改密碼</button>
+      <button id="signOutButton" class="button ghost" type="button">登出</button>
+    </div>
+  </header>
+
+  <main class="page-shell admin-layout">
+    <section class="page-heading">
+      <div>
+        <p class="eyebrow">Shipping Team</p>
+        <h1>通關紀錄後台</h1>
+      </div>
+      <span class="brand-chip">TCI Admin Console</span>
+    </section>
+
+    <form id="recordForm" class="admin-form">
+      <input id="recordId" type="hidden">
+      <div class="form-grid">
+        <label>
+          國家
+          <input id="countryInput" list="countryList" required>
+          <datalist id="countryList"></datalist>
+        </label>
+        <label>
+          口岸
+          <input id="portInput" list="portList" required>
+          <datalist id="portList"></datalist>
+        </label>
+        <label>
+          劑型
+          <select id="dosageFormInput" required></select>
+        </label>
+        <label>
+          通關結果
+          <select id="clearanceResultInput" required>
+            <option value="">請選擇</option>
+            <option value="success">成功</option>
+            <option value="delayed">延遲</option>
+            <option value="held">扣關</option>
+            <option value="rejected">退運</option>
+          </select>
+        </label>
+        <label>
+          通關天數
+          <input id="clearanceDaysInput" type="number" min="0" required>
+        </label>
+        <label>
+          風險等級
+          <select id="riskLevelInput" required>
+            <option value="">請選擇</option>
+            <option value="green">Green</option>
+            <option value="yellow">Yellow</option>
+            <option value="red">Red</option>
+          </select>
+        </label>
+      </div>
+      <label>
+        所需文件
+        <input id="requiredDocumentsInput" placeholder="COA, GMP Certificate" required>
+      </label>
+      <label>
+        建議 Broker
+        <input id="brokerInput">
+      </label>
+      <fieldset class="checkbox-row">
+        <legend>異常紀錄</legend>
+        <label><input id="issueSupplementInput" type="checkbox">曾補件</label>
+        <label><input id="issueHeldInput" type="checkbox">曾扣關</label>
+        <label><input id="issueDelayedInput" type="checkbox">曾延遲</label>
+      </fieldset>
+      <label>
+        備註
+        <textarea id="issueNoteInput"></textarea>
+      </label>
+      <button id="submitButton" class="button primary" type="submit">新增紀錄</button>
+      <button id="cancelEditButton" class="button ghost" type="button" hidden>取消編輯</button>
+      <p id="adminMessage" class="message" aria-live="polite"></p>
+    </form>
+
+    <section class="table-card">
+      <div class="table-toolbar">
+        <h2>歷史紀錄管理</h2>
+        <label>
+          依國家篩選
+          <select id="adminCountryFilter">
+            <option value="">全部國家</option>
+          </select>
+        </label>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>國家</th>
+              <th>口岸</th>
+              <th>劑型</th>
+              <th>結果</th>
+              <th>天數</th>
+              <th>風險</th>
+              <th>文件</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="recordsTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="roleManagementSection" class="table-card" hidden>
+      <div class="table-toolbar">
+        <div>
+          <h2>使用者角色管理</h2>
+          <p class="hint">Admin 可直接建立新帳號，也可修改既有帳號角色。</p>
+        </div>
+      </div>
+
+      <form id="createUserForm" class="role-form create-user-form">
+        <label>
+          新使用者 Email
+          <input id="newUserEmailInput" type="email" placeholder="name@tci-bio.com" required>
+        </label>
+        <label>
+          暫時密碼
+          <input id="newUserPasswordInput" type="password" minlength="6" required>
+        </label>
+        <label>
+          角色
+          <select id="newUserRoleSelect" required>
+            <option value="user">user</option>
+            <option value="shipping">shipping</option>
+            <option value="admin">admin</option>
+          </select>
+        </label>
+        <button class="button primary" type="submit">建立帳號</button>
+      </form>
+      <p id="createUserMessage" class="message" aria-live="polite"></p>
+
+      <form id="roleForm" class="role-form">
+        <label>
+          既有使用者 Email
+          <input id="roleEmailInput" type="email" placeholder="name@tci-bio.com" required>
+        </label>
+        <label>
+          角色
+          <select id="roleSelect" required>
+            <option value="user">user</option>
+            <option value="shipping">shipping</option>
+            <option value="admin">admin</option>
+          </select>
+        </label>
+        <button class="button primary" type="submit">儲存角色</button>
+      </form>
+      <p id="roleMessage" class="message" aria-live="polite"></p>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>角色</th>
+              <th>User ID</th>
+              <th>建立日期</th>
+            </tr>
+          </thead>
+          <tbody id="rolesTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div id="passwordDialog" class="modal-backdrop" hidden>
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="passwordDialogTitle">
+      <h2 id="passwordDialogTitle">修改密碼</h2>
+      <form id="passwordForm">
+        <label>
+          新密碼
+          <input id="newPassword" type="password" autocomplete="new-password" minlength="6" required>
+        </label>
+        <label>
+          再輸入一次
+          <input id="confirmPassword" type="password" autocomplete="new-password" minlength="6" required>
+        </label>
+        <div class="modal-actions">
+          <button class="button primary" type="submit">儲存新密碼</button>
+          <button id="cancelPasswordButton" class="button ghost" type="button">取消</button>
+        </div>
+      </form>
+      <p id="passwordMessage" class="message" aria-live="polite"></p>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/search.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
