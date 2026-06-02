@@ -230,7 +230,11 @@
     if (auth.role === 'admin') {
       field('roleManagementSection').hidden = false;
       bindRoleForm();
-      await loadRoleAssignments();
+      try {
+        await loadRoleAssignments();
+      } catch (error) {
+        roleMessage(`角色管理尚未啟用：${error.message}`, 'error');
+      }
     }
   }
 

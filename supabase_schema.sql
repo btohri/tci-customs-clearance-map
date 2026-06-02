@@ -189,3 +189,6 @@ $$;
 grant execute on function public.is_current_user_admin() to authenticated;
 grant execute on function public.list_user_role_assignments() to authenticated;
 grant execute on function public.assign_user_role_by_email(text, text) to authenticated;
+
+-- 讓 Supabase/PostgREST 重新載入 RPC schema cache。
+notify pgrst, 'reload schema';
