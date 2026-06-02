@@ -7,6 +7,10 @@
     return document.body.dataset.page === 'login';
   }
 
+  function isRegisterPage() {
+    return document.body.dataset.page === 'register';
+  }
+
   function loginUrl() {
     return location.pathname.includes('/admin/') ? '../login.html' : 'login.html';
   }
@@ -17,6 +21,10 @@
 
   async function signIn(email, password) {
     return window.TCIApi.signIn(email, password);
+  }
+
+  async function signUp(email, password) {
+    return window.TCIApi.signUp(email, password);
   }
 
   async function signOut() {
@@ -97,6 +105,56 @@
     });
   }
 
+  async function initRegisterPage() {
+    const message = document.getElementById('registerMessage');
+    try {
+      const session = await window.TCIApi.getSession();
+      if (session) {
+        location.href = 'index.html';
+        return;
+      }
+    } catch (error) {
+      message.textContent = error.message;
+      message.className = 'message error';
+    }
+
+    document.getElementById('registerForm')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      message.textContent = '建立帳號中...';
+      message.className = 'message';
+      const email = document.getElementById('registerEmail').value.trim();
+      const password = document.getElementById('registerPassword').value;
+      const confirmPassword = document.getElementById('registerConfirmPassword').value;
+
+      if (password.length < 6) {
+        message.textContent = '密碼至少需要 6 碼。';
+        message.className = 'message error';
+        return;
+      }
+      if (password !== confirmPassword) {
+        message.textContent = '兩次輸入的密碼不一致。';
+        message.className = 'message error';
+        return;
+      }
+
+      try {
+        const data = await signUp(email, password);
+        if (data.session) {
+          message.textContent = '註冊成功，正在前往查詢頁。';
+          message.className = 'message success';
+          location.href = 'index.html';
+          return;
+        }
+        message.textContent = '註冊成功，請依信件完成驗證後再登入。';
+        message.className = 'message success';
+        document.getElementById('registerForm').reset();
+      } catch (error) {
+        message.textContent = error.message;
+        message.className = 'message error';
+      }
+    });
+  }
+
   function bindSignOut() {
     document.getElementById('signOutButton')?.addEventListener('click', signOut);
   }
@@ -160,6 +218,7 @@
     currentUser: null,
     currentRole: 'user',
     signIn,
+    signUp,
     signOut,
     updatePassword,
     getCurrentUser,
@@ -171,6 +230,8 @@
   document.addEventListener('DOMContentLoaded', () => {
     if (isLoginPage()) {
       initLoginPage();
+    } else if (isRegisterPage()) {
+      initRegisterPage();
     } else {
       bindSignOut();
       bindPasswordDialog();

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>註冊 | TCI 通關地圖</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="register" class="login-page">
+  <main class="login-shell">
+    <section class="card login-card">
+      <img class="login-logo" src="TCI.png" alt="TCI">
+      <p class="eyebrow">TCI Customs Clearance Map</p>
+      <h1>建立通關地圖帳號</h1>
+      <form id="registerForm">
+        <label>
+          Email
+          <input id="registerEmail" type="email" autocomplete="email" placeholder="name@tci-bio.com" required>
+        </label>
+        <label>
+          密碼
+          <input id="registerPassword" type="password" autocomplete="new-password" minlength="6" required>
+        </label>
+        <label>
+          再輸入一次
+          <input id="registerConfirmPassword" type="password" autocomplete="new-password" minlength="6" required>
+        </label>
+        <button class="button primary full" type="submit">建立帳號</button>
+      </form>
+      <p id="registerMessage" class="message" aria-live="polite"></p>
+      <p class="auth-switch">已有帳號？<a href="login.html">回到登入</a></p>
+      <p class="hint">新帳號預設為一般查詢權限；Shipping / Admin 權限仍由 Admin 指派。</p>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>

@@ -309,6 +309,22 @@ tbody tr:hover {
   font-size: 0.92rem;
 }
 
+.auth-switch {
+  margin: 0.85rem 0 0;
+  color: var(--muted);
+  font-size: 0.94rem;
+  text-align: center;
+}
+
+.auth-switch a {
+  color: var(--brand-dark);
+  font-weight: 800;
+}
+
+.auth-switch a:hover {
+  text-decoration: underline;
+}
+
 .message.error {
   color: #c73232;
 }

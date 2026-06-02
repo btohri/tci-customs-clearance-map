@@ -152,6 +152,15 @@
     return data;
   }
 
+  async function signUp(email, password) {
+    const { data, error } = await getClient().auth.signUp({
+      email: String(email || '').trim().toLowerCase(),
+      password
+    });
+    if (error) throw error;
+    return data;
+  }
+
   async function signOut() {
     const { error } = await getClient().auth.signOut();
     if (error) throw error;
@@ -361,6 +370,7 @@
     getSession,
     getCurrentUser,
     signIn,
+    signUp,
     signOut,
     updatePassword,
     getUserRole,
