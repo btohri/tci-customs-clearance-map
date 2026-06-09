@@ -15,6 +15,7 @@
     <nav class="nav-links">
       <a href="../index.html">查詢</a>
       <a id="adminNavLink" href="index.html">船務後台</a>
+      <a id="historyNavLink" href="history.html" hidden>歷史紀錄</a>
       <a id="userManagementNavLink" aria-current="page" href="users.html" hidden>使用者管理</a>
     </nav>
     <div class="user-area">
@@ -81,6 +82,21 @@
         <button id="deleteUserButton" class="button danger" type="button">刪除帳號</button>
       </form>
       <p id="roleMessage" class="message" aria-live="polite"></p>
+
+      <form id="resetPasswordForm" class="role-form reset-password-form">
+        <label>
+          重設密碼 Email
+          <select id="resetPasswordEmailInput" required>
+            <option value="">請選擇使用者</option>
+          </select>
+        </label>
+        <label>
+          新密碼
+          <input id="managedNewPasswordInput" type="password" minlength="6" required>
+        </label>
+        <button id="resetPasswordButton" class="button primary" type="submit">重設密碼</button>
+      </form>
+      <p id="resetPasswordMessage" class="message" aria-live="polite"></p>
 
       <div class="table-scroll">
         <table>

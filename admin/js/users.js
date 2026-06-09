@@ -21,6 +21,13 @@
     element.className = `message ${type}`.trim();
   }
 
+  function resetPasswordMessage(text, type = '') {
+    const element = field('resetPasswordMessage');
+    if (!element) return;
+    element.textContent = text;
+    element.className = `message ${type}`.trim();
+  }
+
   function renderRolesTable() {
     field('rolesTableBody').innerHTML = roleAssignments.map((item) => `
       <tr>
@@ -34,14 +41,22 @@
 
   function renderRoleSelect() {
     const select = field('roleEmailInput');
+    const resetSelect = field('resetPasswordEmailInput');
     const selectedEmail = select.value;
+    const selectedResetEmail = resetSelect.value;
     select.innerHTML = '<option value="">請選擇使用者</option>' + roleAssignments.map((item) => `
       <option value="${window.TCISearch.escapeHtml(item.email)}" data-role="${window.TCISearch.escapeHtml(item.role)}">
         ${window.TCISearch.escapeHtml(item.email)}｜${window.TCISearch.escapeHtml(item.role)}
       </option>
     `).join('');
+    resetSelect.innerHTML = '<option value="">請選擇使用者</option>' + roleAssignments.map((item) => `
+      <option value="${window.TCISearch.escapeHtml(item.email)}">${window.TCISearch.escapeHtml(item.email)}｜${window.TCISearch.escapeHtml(item.role)}</option>
+    `).join('');
     if (roleAssignments.some((item) => item.email === selectedEmail)) {
       select.value = selectedEmail;
+    }
+    if (roleAssignments.some((item) => item.email === selectedResetEmail)) {
+      resetSelect.value = selectedResetEmail;
     }
   }
 
@@ -117,6 +132,32 @@
         roleMessage(error.message, 'error');
       } finally {
         field('deleteUserButton').disabled = false;
+      }
+    });
+
+    field('resetPasswordForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const email = field('resetPasswordEmailInput').value;
+      const password = field('managedNewPasswordInput').value;
+      if (!email) {
+        resetPasswordMessage('請先選擇使用者。', 'error');
+        return;
+      }
+      if (password.length < 6) {
+        resetPasswordMessage('新密碼至少需要 6 碼。', 'error');
+        return;
+      }
+      if (!confirm(`確定要重設 ${email} 的密碼？`)) return;
+      try {
+        field('resetPasswordButton').disabled = true;
+        resetPasswordMessage('重設中...');
+        await window.TCIApi.resetUserPasswordByEmail(email, password);
+        resetPasswordMessage('密碼已重設。', 'success');
+        field('resetPasswordForm').reset();
+      } catch (error) {
+        resetPasswordMessage(error.message, 'error');
+      } finally {
+        field('resetPasswordButton').disabled = false;
       }
     });
   }

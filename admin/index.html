@@ -15,6 +15,7 @@
     <nav class="nav-links">
       <a href="../index.html">查詢</a>
       <a id="adminNavLink" aria-current="page" href="index.html">船務後台</a>
+      <a id="historyNavLink" href="history.html" hidden>歷史紀錄</a>
       <a id="userManagementNavLink" href="users.html" hidden>使用者管理</a>
     </nav>
     <div class="user-area">
@@ -42,6 +43,7 @@
             國家
             <input id="countryInput" list="countryList" required>
             <datalist id="countryList"></datalist>
+            <datalist id="logisticsPortList"></datalist>
           </label>
           <label>
             口岸
@@ -124,7 +126,7 @@
           </label>
           <label>
             起運港
-            <input id="originPortInput" required>
+            <input id="originPortInput" list="logisticsPortList" required>
           </label>
           <label>
             目的國家
@@ -132,7 +134,7 @@
           </label>
           <label>
             目的港
-            <input id="destinationPortInput" required>
+            <input id="destinationPortInput" list="logisticsPortList" required>
           </label>
           <label>
             預估天數
@@ -194,35 +196,6 @@
 
     <section class="table-card">
       <div class="table-toolbar">
-        <h2>歷史紀錄管理</h2>
-        <label>
-          依國家篩選
-          <select id="adminCountryFilter">
-            <option value="">全部國家</option>
-          </select>
-        </label>
-      </div>
-      <div class="table-scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>國家</th>
-              <th>口岸</th>
-              <th>劑型</th>
-              <th>結果</th>
-              <th>天數</th>
-              <th>風險</th>
-              <th>文件</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody id="recordsTableBody"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="table-card">
-      <div class="table-toolbar">
         <h2>航線情報管理</h2>
       </div>
 
@@ -240,6 +213,211 @@
             </tr>
           </thead>
           <tbody id="routesTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="admin-entry-grid">
+      <section class="table-card">
+        <div class="table-toolbar">
+          <div>
+            <h2>港口資料</h2>
+            <p class="hint">可先手動維護常用港口；未來可由 UN/LOCODE 或 World Port Index 匯入。</p>
+          </div>
+        </div>
+        <form id="portForm" class="compact-form">
+          <input id="portId" type="hidden">
+          <div class="form-grid">
+            <label>
+              港口名稱
+              <input id="portNameInput" required>
+            </label>
+            <label>
+              國家
+              <input id="portCountryInput" list="countryList" required>
+            </label>
+            <label>
+              UN/LOCODE
+              <input id="unlocodeInput" placeholder="TWKHH">
+            </label>
+            <label>
+              來源
+              <input id="portSourceInput" placeholder="UN/LOCODE">
+            </label>
+            <label>
+              緯度
+              <input id="portLatitudeInput" type="number" step="0.000001">
+            </label>
+            <label>
+              經度
+              <input id="portLongitudeInput" type="number" step="0.000001">
+            </label>
+          </div>
+          <div class="form-actions">
+            <button id="portSubmitButton" class="button primary" type="submit">新增港口</button>
+            <button id="portCancelEditButton" class="button ghost" type="button" hidden>取消編輯</button>
+          </div>
+          <p id="portMessage" class="message" aria-live="polite"></p>
+        </form>
+        <div class="table-scroll compact-table">
+          <table>
+            <thead>
+              <tr>
+                <th>港口</th>
+                <th>國家</th>
+                <th>UN/LOCODE</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="portsTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="table-card">
+        <div class="table-toolbar">
+          <div>
+            <h2>承運商資料</h2>
+            <p class="hint">維護船公司、航空公司或貨代，供歷史報價標記來源。</p>
+          </div>
+        </div>
+        <form id="carrierForm" class="compact-form">
+          <input id="carrierId" type="hidden">
+          <div class="form-grid">
+            <label>
+              承運商
+              <input id="carrierNameInput" required>
+            </label>
+            <label>
+              類型
+              <select id="carrierTypeInput" required>
+                <option value="ocean">船公司</option>
+                <option value="air">航空公司</option>
+                <option value="forwarder">貨代</option>
+              </select>
+            </label>
+            <label>
+              網站
+              <input id="carrierWebsiteInput" type="url">
+            </label>
+            <label>
+              備註
+              <input id="carrierRemarksInput">
+            </label>
+          </div>
+          <div class="form-actions">
+            <button id="carrierSubmitButton" class="button primary" type="submit">新增承運商</button>
+            <button id="carrierCancelEditButton" class="button ghost" type="button" hidden>取消編輯</button>
+          </div>
+          <p id="carrierMessage" class="message" aria-live="polite"></p>
+        </form>
+        <div class="table-scroll compact-table">
+          <table>
+            <thead>
+              <tr>
+                <th>承運商</th>
+                <th>類型</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="carriersTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <section class="table-card">
+      <div class="table-toolbar">
+        <div>
+          <h2>歷史報價</h2>
+          <p class="hint">只作內部歷史參考，不代表即時真實運價。</p>
+        </div>
+      </div>
+      <form id="quoteForm" class="compact-form">
+        <input id="quoteId" type="hidden">
+        <div class="form-grid quote-grid">
+          <label>
+            關聯航線
+            <select id="quoteRouteInput">
+              <option value="">不指定</option>
+            </select>
+          </label>
+          <label>
+            承運商
+            <select id="quoteCarrierInput">
+              <option value="">未指定</option>
+            </select>
+          </label>
+          <label>
+            起運港
+            <input id="quoteOriginPortInput" list="logisticsPortList" required>
+          </label>
+          <label>
+            目的港
+            <input id="quoteDestinationPortInput" list="logisticsPortList" required>
+          </label>
+          <label>
+            運輸方式
+            <select id="quoteTransportModeInput" required>
+              <option value="ocean">海運</option>
+              <option value="air">空運</option>
+              <option value="multimodal">複合運輸</option>
+            </select>
+          </label>
+          <label>
+            櫃型/計費單位
+            <input id="containerTypeInput" placeholder="40HQ / pallet / kg">
+          </label>
+          <label>
+            計費重量 kg
+            <input id="chargeableWeightInput" type="number" min="0" step="0.01">
+          </label>
+          <label>
+            金額
+            <input id="quoteAmountInput" type="number" min="0" step="0.01" required>
+          </label>
+          <label>
+            幣別
+            <input id="quoteCurrencyInput" value="USD" required>
+          </label>
+          <label>
+            報價日期
+            <input id="quoteDateInput" type="date" required>
+          </label>
+          <label>
+            有效至
+            <input id="quoteValidUntilInput" type="date">
+          </label>
+          <label>
+            報價來源
+            <input id="quoteSourceInput" placeholder="Forwarder / Broker">
+          </label>
+        </div>
+        <label>
+          備註
+          <textarea id="quoteRemarksInput"></textarea>
+        </label>
+        <div class="form-actions">
+          <button id="quoteSubmitButton" class="button primary" type="submit">新增報價</button>
+          <button id="quoteCancelEditButton" class="button ghost" type="button" hidden>取消編輯</button>
+        </div>
+        <p id="quoteMessage" class="message" aria-live="polite"></p>
+      </form>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>日期</th>
+              <th>航線</th>
+              <th>方式</th>
+              <th>承運商</th>
+              <th>單位</th>
+              <th>金額</th>
+              <th>來源</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="quotesTableBody"></tbody>
         </table>
       </div>
     </section>

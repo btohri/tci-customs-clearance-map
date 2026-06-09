@@ -7,6 +7,7 @@
   let routeLayerGroup;
   let riskSummary = {};
   let routes = [];
+  let quotes = [];
   let routesEnabled = true;
   let routesAvailable = true;
 
@@ -96,10 +97,34 @@
           <span>${window.TCISearch.escapeHtml(route.estimated_days || '--')} 天</span>
           <span>${window.TCISearch.escapeHtml(route.distance_km || '--')} km</span>
         </div>
+        ${renderQuoteSummary(route)}
         ${route.chokepoints ? `<p class="hint">關鍵通道：${window.TCISearch.escapeHtml(route.chokepoints)}</p>` : ''}
         ${route.notes ? `<p>${window.TCISearch.escapeHtml(route.notes)}</p>` : ''}
       </article>
     `).join('');
+  }
+
+  function getRouteQuotes(route) {
+    return quotes.filter((quote) => (
+      quote.route_id === route.id ||
+      (
+        String(quote.origin_port || '').toLowerCase() === String(route.origin_port || '').toLowerCase() &&
+        String(quote.destination_port || '').toLowerCase() === String(route.destination_port || '').toLowerCase()
+      )
+    ));
+  }
+
+  function renderQuoteSummary(route) {
+    const routeQuotes = getRouteQuotes(route).slice(0, 3);
+    if (!routeQuotes.length) return '';
+    return `
+      <div class="quote-summary">
+        <strong>歷史報價參考</strong>
+        ${routeQuotes.map((quote) => `
+          <span>${window.TCISearch.escapeHtml(quote.quote_date || '')}｜${window.TCISearch.escapeHtml(quote.currency || '')} ${window.TCISearch.escapeHtml(quote.amount || '')}｜${window.TCISearch.escapeHtml(quote.container_type || quote.chargeable_weight_kg || '')}</span>
+        `).join('')}
+      </div>
+    `;
   }
 
   function renderRoutePopup(route) {
@@ -244,6 +269,14 @@
     drawRoutes();
   }
 
+  async function loadQuotes() {
+    try {
+      quotes = await window.TCIApi.getAllQuotes();
+    } catch (error) {
+      quotes = [];
+    }
+  }
+
   function bindRouteLayerToggle() {
     const button = document.getElementById('routeLayerToggle');
     if (!button) return;
@@ -275,6 +308,7 @@
 
     setSidebarLoading('載入地圖資料中...');
     await refreshMapColors();
+    await loadQuotes();
     await loadRoutes();
     const response = await fetch(geoJsonUrl);
     const geojson = await response.json();

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>歷史紀錄 | TCI 通關地圖</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body data-page="history">
+  <header class="topbar">
+    <a class="brand" href="../index.html">
+      <img src="../TCI.png" alt="TCI">
+      <span>通關地圖</span>
+    </a>
+    <nav class="nav-links">
+      <a href="../index.html">查詢</a>
+      <a id="adminNavLink" href="index.html">船務後台</a>
+      <a id="historyNavLink" aria-current="page" href="history.html" hidden>歷史紀錄</a>
+      <a id="userManagementNavLink" href="users.html" hidden>使用者管理</a>
+    </nav>
+    <div class="user-area">
+      <span id="userMeta">載入中...</span>
+      <button id="changePasswordButton" class="button ghost" type="button">修改密碼</button>
+      <button id="signOutButton" class="button ghost" type="button">登出</button>
+    </div>
+  </header>
+
+  <main class="page-shell admin-layout">
+    <section class="page-heading">
+      <div>
+        <p class="eyebrow">Shipping Records</p>
+        <h1>歷史紀錄管理</h1>
+      </div>
+      <span class="brand-chip">Record Archive</span>
+    </section>
+
+    <section class="table-card">
+      <div class="table-toolbar">
+        <h2>通關歷史紀錄</h2>
+        <label>
+          依國家篩選
+          <select id="adminCountryFilter">
+            <option value="">全部國家</option>
+          </select>
+        </label>
+      </div>
+      <p id="historyMessage" class="message" aria-live="polite"></p>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>國家</th>
+              <th>口岸</th>
+              <th>劑型</th>
+              <th>結果</th>
+              <th>天數</th>
+              <th>風險</th>
+              <th>文件</th>
+              <th>更新日</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="recordsTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div id="passwordDialog" class="modal-backdrop" hidden>
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="passwordDialogTitle">
+      <h2 id="passwordDialogTitle">修改密碼</h2>
+      <form id="passwordForm">
+        <label>
+          新密碼
+          <input id="newPassword" type="password" autocomplete="new-password" minlength="6" required>
+        </label>
+        <label>
+          再輸入一次
+          <input id="confirmPassword" type="password" autocomplete="new-password" minlength="6" required>
+        </label>
+        <div class="modal-actions">
+          <button class="button primary" type="submit">儲存新密碼</button>
+          <button id="cancelPasswordButton" class="button ghost" type="button">取消</button>
+        </div>
+      </form>
+      <p id="passwordMessage" class="message" aria-live="polite"></p>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/search.js"></script>
+  <script src="js/history.js"></script>
+</body>
+</html>

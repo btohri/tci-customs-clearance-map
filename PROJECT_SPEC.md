@@ -147,6 +147,30 @@ create table broker_directory (
   remarks text
 );
 
+-- 港口資料
+create table ports (
+  id uuid primary key default uuid_generate_v4(),
+  port_name text not null,
+  country text not null,
+  unlocode text,
+  latitude double precision,
+  longitude double precision,
+  source text,
+  created_at timestamp default now(),
+  last_updated timestamp default now()
+);
+
+-- 承運商資料
+create table carriers (
+  id uuid primary key default uuid_generate_v4(),
+  carrier_name text not null,
+  carrier_type text check (carrier_type in ('ocean', 'air', 'forwarder')) not null,
+  website text,
+  remarks text,
+  created_at timestamp default now(),
+  last_updated timestamp default now()
+);
+
 -- 航線風險情報
 create table route_intelligence (
   id uuid primary key default uuid_generate_v4(),
@@ -166,6 +190,26 @@ create table route_intelligence (
   chokepoints text,
   route_path jsonb,
   notes text,
+  created_at timestamp default now(),
+  last_updated timestamp default now()
+);
+
+-- 歷史報價，不代表即時真實運價
+create table freight_quotes (
+  id uuid primary key default uuid_generate_v4(),
+  route_id uuid references route_intelligence(id) on delete set null,
+  origin_port text not null,
+  destination_port text not null,
+  transport_mode text check (transport_mode in ('ocean', 'air', 'multimodal')) default 'ocean',
+  carrier_id uuid references carriers(id) on delete set null,
+  container_type text,
+  chargeable_weight_kg numeric,
+  amount numeric not null,
+  currency text default 'USD',
+  quote_date date default current_date,
+  valid_until date,
+  source_name text,
+  remarks text,
   created_at timestamp default now(),
   last_updated timestamp default now()
 );

@@ -194,6 +194,47 @@
     };
   }
 
+  function normalizePort(data) {
+    return {
+      port_name: data.port_name?.trim(),
+      country: normalizeCountry(data.country),
+      unlocode: data.unlocode?.trim().toUpperCase() || null,
+      latitude: optionalNumber(data.latitude),
+      longitude: optionalNumber(data.longitude),
+      source: data.source?.trim() || null,
+      last_updated: new Date().toISOString()
+    };
+  }
+
+  function normalizeCarrier(data) {
+    return {
+      carrier_name: data.carrier_name?.trim(),
+      carrier_type: data.carrier_type || 'ocean',
+      website: data.website?.trim() || null,
+      remarks: data.remarks?.trim() || null,
+      last_updated: new Date().toISOString()
+    };
+  }
+
+  function normalizeQuote(data) {
+    return {
+      route_id: data.route_id || null,
+      origin_port: data.origin_port?.trim(),
+      destination_port: data.destination_port?.trim(),
+      transport_mode: data.transport_mode || 'ocean',
+      carrier_id: data.carrier_id || null,
+      container_type: data.container_type?.trim() || null,
+      chargeable_weight_kg: optionalNumber(data.chargeable_weight_kg),
+      amount: Number(data.amount),
+      currency: data.currency?.trim().toUpperCase() || 'USD',
+      quote_date: data.quote_date || new Date().toISOString().slice(0, 10),
+      valid_until: data.valid_until || null,
+      source_name: data.source_name?.trim() || null,
+      remarks: data.remarks?.trim() || null,
+      last_updated: new Date().toISOString()
+    };
+  }
+
   function parseRoutePath(value) {
     if (Array.isArray(value)) {
       return value
@@ -208,11 +249,29 @@
       .filter((point) => point.length === 2 && point.every(Number.isFinite));
   }
 
-  function normalizeRoute(data) {
+  function findRouteCoordinateFromPorts(ports, country, port) {
+    const normalizedCountry = normalizeCountry(country);
+    const portKey = normalizeKey(port);
+    const match = (ports || []).find((item) => (
+      countryMatches(item.country, normalizedCountry) &&
+      (
+        normalizeKey(item.port_name) === portKey ||
+        normalizeKey(item.unlocode) === portKey ||
+        normalizeKey(item.port_name).includes(portKey) ||
+        portKey.includes(normalizeKey(item.port_name))
+      )
+    ));
+    if (match && Number.isFinite(Number(match.latitude)) && Number.isFinite(Number(match.longitude))) {
+      return { lat: Number(match.latitude), lng: Number(match.longitude) };
+    }
+    return null;
+  }
+
+  function normalizeRoute(data, ports = []) {
     const originCountry = normalizeCountry(data.origin_country);
     const destinationCountry = normalizeCountry(data.destination_country);
-    const originFallback = findRouteCoordinate(originCountry, data.origin_port);
-    const destinationFallback = findRouteCoordinate(destinationCountry, data.destination_port);
+    const originFallback = findRouteCoordinateFromPorts(ports, originCountry, data.origin_port) || findRouteCoordinate(originCountry, data.origin_port);
+    const destinationFallback = findRouteCoordinateFromPorts(ports, destinationCountry, data.destination_port) || findRouteCoordinate(destinationCountry, data.destination_port);
     const originLat = optionalNumber(data.origin_lat) ?? originFallback?.lat ?? null;
     const originLng = optionalNumber(data.origin_lng) ?? originFallback?.lng ?? null;
     const destinationLat = optionalNumber(data.destination_lat) ?? destinationFallback?.lat ?? null;
@@ -371,6 +430,77 @@
     return data || [];
   }
 
+  async function getAllPorts() {
+    const { data, error } = await getClient()
+      .from('ports')
+      .select('*')
+      .order('country')
+      .order('port_name');
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function addPort(data) {
+    const { data: inserted, error } = await getClient()
+      .from('ports')
+      .insert(normalizePort(data))
+      .select()
+      .single();
+    if (error) throw error;
+    return inserted;
+  }
+
+  async function updatePort(id, data) {
+    const { data: updated, error } = await getClient()
+      .from('ports')
+      .update(normalizePort(data))
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return updated;
+  }
+
+  async function deletePort(id) {
+    const { error } = await getClient().from('ports').delete().eq('id', id);
+    if (error) throw error;
+  }
+
+  async function getAllCarriers() {
+    const { data, error } = await getClient()
+      .from('carriers')
+      .select('*')
+      .order('carrier_name');
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function addCarrier(data) {
+    const { data: inserted, error } = await getClient()
+      .from('carriers')
+      .insert(normalizeCarrier(data))
+      .select()
+      .single();
+    if (error) throw error;
+    return inserted;
+  }
+
+  async function updateCarrier(id, data) {
+    const { data: updated, error } = await getClient()
+      .from('carriers')
+      .update(normalizeCarrier(data))
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return updated;
+  }
+
+  async function deleteCarrier(id) {
+    const { error } = await getClient().from('carriers').delete().eq('id', id);
+    if (error) throw error;
+  }
+
   async function getAllRoutes() {
     const { data, error } = await getClient()
       .from('route_intelligence')
@@ -389,7 +519,13 @@
   }
 
   async function addRoute(data) {
-    const payload = normalizeRoute(data);
+    let ports = [];
+    try {
+      ports = await getAllPorts();
+    } catch (error) {
+      ports = [];
+    }
+    const payload = normalizeRoute(data, ports);
     const { data: inserted, error } = await getClient()
       .from('route_intelligence')
       .insert(payload)
@@ -400,9 +536,15 @@
   }
 
   async function updateRoute(id, data) {
+    let ports = [];
+    try {
+      ports = await getAllPorts();
+    } catch (error) {
+      ports = [];
+    }
     const { data: updated, error } = await getClient()
       .from('route_intelligence')
-      .update(normalizeRoute(data))
+      .update(normalizeRoute(data, ports))
       .eq('id', id)
       .select()
       .single();
@@ -412,6 +554,52 @@
 
   async function deleteRoute(id) {
     const { error } = await getClient().from('route_intelligence').delete().eq('id', id);
+    if (error) throw error;
+  }
+
+  async function getAllQuotes() {
+    const { data, error } = await getClient()
+      .from('freight_quotes')
+      .select('*')
+      .order('quote_date', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function getQuotesForRoute(route) {
+    const quotes = await getAllQuotes();
+    return quotes.filter((quote) => (
+      quote.route_id === route.id ||
+      (
+        String(quote.origin_port || '').toLowerCase() === String(route.origin_port || '').toLowerCase() &&
+        String(quote.destination_port || '').toLowerCase() === String(route.destination_port || '').toLowerCase()
+      )
+    ));
+  }
+
+  async function addQuote(data) {
+    const { data: inserted, error } = await getClient()
+      .from('freight_quotes')
+      .insert(normalizeQuote(data))
+      .select()
+      .single();
+    if (error) throw error;
+    return inserted;
+  }
+
+  async function updateQuote(id, data) {
+    const { data: updated, error } = await getClient()
+      .from('freight_quotes')
+      .update(normalizeQuote(data))
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return updated;
+  }
+
+  async function deleteQuote(id) {
+    const { error } = await getClient().from('freight_quotes').delete().eq('id', id);
     if (error) throw error;
   }
 
@@ -517,6 +705,21 @@
     return data;
   }
 
+  async function resetUserPasswordByEmail(email, password) {
+    const payload = {
+      action: 'reset-password',
+      email: String(email || '').trim().toLowerCase(),
+      password
+    };
+
+    const { data, error } = await getClient().functions.invoke('create-user', {
+      body: payload
+    });
+    if (error) throw error;
+    if (data?.error) throw new Error(data.error);
+    return data;
+  }
+
   window.TCIApi = {
     dosageForms,
     countryAliases,
@@ -542,16 +745,30 @@
     updateRecord,
     deleteRecord,
     getAllRecords,
+    getAllPorts,
+    addPort,
+    updatePort,
+    deletePort,
+    getAllCarriers,
+    addCarrier,
+    updateCarrier,
+    deleteCarrier,
     getAllRoutes,
     getRoutesForCountry,
     addRoute,
     updateRoute,
     deleteRoute,
+    getAllQuotes,
+    getQuotesForRoute,
+    addQuote,
+    updateQuote,
+    deleteQuote,
     getCountryRiskSummary,
     listUserRoleAssignments,
     isCurrentUserAdmin,
     assignUserRoleByEmail,
     deleteUserByEmail,
-    createUserAccount
+    createUserAccount,
+    resetUserPasswordByEmail
   };
 })();

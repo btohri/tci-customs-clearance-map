@@ -109,9 +109,11 @@
   function renderUser(user, role) {
     const userMeta = document.getElementById('userMeta');
     const adminNavLink = document.getElementById('adminNavLink');
+    const historyNavLink = document.getElementById('historyNavLink');
     const userManagementNavLink = document.getElementById('userManagementNavLink');
     if (userMeta) userMeta.textContent = `${user.email}｜${role}`;
     if (adminNavLink) adminNavLink.hidden = !shippingRoles.includes(role);
+    if (historyNavLink) historyNavLink.hidden = !shippingRoles.includes(role);
     if (userManagementNavLink) userManagementNavLink.hidden = role !== 'admin';
   }
 

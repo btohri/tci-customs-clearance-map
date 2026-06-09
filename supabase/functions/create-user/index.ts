@@ -27,15 +27,20 @@ serve(async (req) => {
     }
 
     const body = await req.json();
+    const action = String(body.action || 'create-user');
     const email = String(body.email || '').trim().toLowerCase();
     const password = String(body.password || '');
     const role = String(body.role || 'user');
+
+    if (!['create-user', 'reset-password'].includes(action)) {
+      return jsonResponse({ error: 'Invalid action.' }, 400);
+    }
 
     if (!email || !password) {
       return jsonResponse({ error: 'Email and password are required.' }, 400);
     }
 
-    if (!['user', 'shipping', 'admin'].includes(role)) {
+    if (action === 'create-user' && !['user', 'shipping', 'admin'].includes(role)) {
       return jsonResponse({ error: 'Invalid role.' }, 400);
     }
 
@@ -57,7 +62,28 @@ serve(async (req) => {
 
     if (roleError) throw roleError;
     if (adminRole?.role !== 'admin') {
-      return jsonResponse({ error: 'Only admin can create users.' }, 403);
+      return jsonResponse({ error: 'Only admin can manage users.' }, 403);
+    }
+
+    if (action === 'reset-password') {
+      const { data: users, error: listError } = await adminClient.auth.admin.listUsers();
+      if (listError) throw listError;
+
+      const targetUser = users.users.find((user) => user.email?.toLowerCase() === email);
+      if (!targetUser) {
+        return jsonResponse({ error: `User email not found: ${email}` }, 404);
+      }
+
+      const { error: updateError } = await adminClient.auth.admin.updateUserById(targetUser.id, {
+        password
+      });
+      if (updateError) throw updateError;
+
+      return jsonResponse({
+        user_id: targetUser.id,
+        email: targetUser.email,
+        updated: true
+      });
     }
 
     const { data: created, error: createError } = await adminClient.auth.admin.createUser({

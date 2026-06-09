@@ -41,6 +41,28 @@ create table if not exists broker_directory (
   remarks text
 );
 
+create table if not exists ports (
+  id uuid primary key default uuid_generate_v4(),
+  port_name text not null,
+  country text not null,
+  unlocode text,
+  latitude double precision,
+  longitude double precision,
+  source text,
+  created_at timestamp default now(),
+  last_updated timestamp default now()
+);
+
+create table if not exists carriers (
+  id uuid primary key default uuid_generate_v4(),
+  carrier_name text not null,
+  carrier_type text check (carrier_type in ('ocean', 'air', 'forwarder')) not null,
+  website text,
+  remarks text,
+  created_at timestamp default now(),
+  last_updated timestamp default now()
+);
+
 create table if not exists route_intelligence (
   id uuid primary key default uuid_generate_v4(),
   route_name text not null,
@@ -68,6 +90,25 @@ alter table route_intelligence alter column origin_lng drop not null;
 alter table route_intelligence alter column destination_lat drop not null;
 alter table route_intelligence alter column destination_lng drop not null;
 
+create table if not exists freight_quotes (
+  id uuid primary key default uuid_generate_v4(),
+  route_id uuid references route_intelligence(id) on delete set null,
+  origin_port text not null,
+  destination_port text not null,
+  transport_mode text check (transport_mode in ('ocean', 'air', 'multimodal')) default 'ocean',
+  carrier_id uuid references carriers(id) on delete set null,
+  container_type text,
+  chargeable_weight_kg numeric,
+  amount numeric not null,
+  currency text default 'USD',
+  quote_date date default current_date,
+  valid_until date,
+  source_name text,
+  remarks text,
+  created_at timestamp default now(),
+  last_updated timestamp default now()
+);
+
 create table if not exists user_roles (
   id uuid primary key default uuid_generate_v4(),
   user_id uuid references auth.users(id) unique,
@@ -77,7 +118,10 @@ create table if not exists user_roles (
 alter table customs_records enable row level security;
 alter table document_requirements enable row level security;
 alter table broker_directory enable row level security;
+alter table ports enable row level security;
+alter table carriers enable row level security;
 alter table route_intelligence enable row level security;
+alter table freight_quotes enable row level security;
 alter table user_roles enable row level security;
 
 drop policy if exists "登入者可查詢通關紀錄" on customs_records;
@@ -122,6 +166,74 @@ drop policy if exists "登入者可查詢Broker" on broker_directory;
 create policy "登入者可查詢Broker" on broker_directory
   for select using (auth.role() = 'authenticated');
 
+drop policy if exists "登入者可查詢港口資料" on ports;
+create policy "登入者可查詢港口資料" on ports
+  for select using (auth.role() = 'authenticated');
+
+drop policy if exists "shipping/admin 可新增港口資料" on ports;
+create policy "shipping/admin 可新增港口資料" on ports
+  for insert with check (
+    exists (
+      select 1 from user_roles
+      where user_id = auth.uid()
+      and role in ('shipping', 'admin')
+    )
+  );
+
+drop policy if exists "shipping/admin 可編輯港口資料" on ports;
+create policy "shipping/admin 可編輯港口資料" on ports
+  for update using (
+    exists (
+      select 1 from user_roles
+      where user_id = auth.uid()
+      and role in ('shipping', 'admin')
+    )
+  );
+
+drop policy if exists "shipping/admin 可刪除港口資料" on ports;
+create policy "shipping/admin 可刪除港口資料" on ports
+  for delete using (
+    exists (
+      select 1 from user_roles
+      where user_id = auth.uid()
+      and role in ('shipping', 'admin')
+    )
+  );
+
+drop policy if exists "登入者可查詢承運商" on carriers;
+create policy "登入者可查詢承運商" on carriers
+  for select using (auth.role() = 'authenticated');
+
+drop policy if exists "shipping/admin 可新增承運商" on carriers;
+create policy "shipping/admin 可新增承運商" on carriers
+  for insert with check (
+    exists (
+      select 1 from user_roles
+      where user_id = auth.uid()
+      and role in ('shipping', 'admin')
+    )
+  );
+
+drop policy if exists "shipping/admin 可編輯承運商" on carriers;
+create policy "shipping/admin 可編輯承運商" on carriers
+  for update using (
+    exists (
+      select 1 from user_roles
+      where user_id = auth.uid()
+      and role in ('shipping', 'admin')
+    )
+  );
+
+drop policy if exists "shipping/admin 可刪除承運商" on carriers;
+create policy "shipping/admin 可刪除承運商" on carriers
+  for delete using (
+    exists (
+      select 1 from user_roles
+      where user_id = auth.uid()
+      and role in ('shipping', 'admin')
+    )
+  );
+
 drop policy if exists "登入者可查詢航線情報" on route_intelligence;
 create policy "登入者可查詢航線情報" on route_intelligence
   for select using (auth.role() = 'authenticated');
@@ -148,6 +260,40 @@ create policy "shipping/admin 可編輯航線情報" on route_intelligence
 
 drop policy if exists "shipping/admin 可刪除航線情報" on route_intelligence;
 create policy "shipping/admin 可刪除航線情報" on route_intelligence
+  for delete using (
+    exists (
+      select 1 from user_roles
+      where user_id = auth.uid()
+      and role in ('shipping', 'admin')
+    )
+  );
+
+drop policy if exists "登入者可查詢歷史報價" on freight_quotes;
+create policy "登入者可查詢歷史報價" on freight_quotes
+  for select using (auth.role() = 'authenticated');
+
+drop policy if exists "shipping/admin 可新增歷史報價" on freight_quotes;
+create policy "shipping/admin 可新增歷史報價" on freight_quotes
+  for insert with check (
+    exists (
+      select 1 from user_roles
+      where user_id = auth.uid()
+      and role in ('shipping', 'admin')
+    )
+  );
+
+drop policy if exists "shipping/admin 可編輯歷史報價" on freight_quotes;
+create policy "shipping/admin 可編輯歷史報價" on freight_quotes
+  for update using (
+    exists (
+      select 1 from user_roles
+      where user_id = auth.uid()
+      and role in ('shipping', 'admin')
+    )
+  );
+
+drop policy if exists "shipping/admin 可刪除歷史報價" on freight_quotes;
+create policy "shipping/admin 可刪除歷史報價" on freight_quotes
   for delete using (
     exists (
       select 1 from user_roles
