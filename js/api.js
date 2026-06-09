@@ -359,15 +359,29 @@
   }
 
   async function getPorts(country) {
+    const normalized = normalizeCountry(country);
+    // Try ports master table first (targeted query, avoids full table scan)
+    try {
+      const { data: masterPorts, error: masterError } = await getClient()
+        .from('ports')
+        .select('port_name, country')
+        .order('port_name');
+      if (!masterError && masterPorts?.length) {
+        const filtered = masterPorts
+          .filter((row) => countryMatches(row.country, normalized))
+          .map((row) => row.port_name)
+          .filter(Boolean);
+        if (filtered.length) return [...new Set(filtered)];
+      }
+    } catch {} // fall through to customs_records fallback
+    // Fall back: query customs_records by normalized country only
     const { data, error } = await getClient()
       .from('customs_records')
-      .select('country, port')
+      .select('port')
+      .eq('country', normalized)
       .order('port');
     if (error) throw error;
-    return [...new Set((data || [])
-      .filter((row) => countryMatches(row.country, country))
-      .map((row) => row.port)
-      .filter(Boolean))];
+    return [...new Set((data || []).map((row) => row.port).filter(Boolean))];
   }
 
   async function searchCustoms({ country, port, dosageForm }) {
@@ -603,6 +617,52 @@
     if (error) throw error;
   }
 
+  function normalizeBroker(data) {
+    return {
+      country: normalizeCountry(data.country),
+      port: data.port?.trim() || null,
+      broker_name: data.broker_name?.trim(),
+      contact_info: data.contact_info?.trim() || null,
+      remarks: data.remarks?.trim() || null
+    };
+  }
+
+  async function getAllBrokers() {
+    const { data, error } = await getClient()
+      .from('broker_directory')
+      .select('*')
+      .order('country')
+      .order('broker_name');
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function addBroker(data) {
+    const { data: inserted, error } = await getClient()
+      .from('broker_directory')
+      .insert(normalizeBroker(data))
+      .select()
+      .single();
+    if (error) throw error;
+    return inserted;
+  }
+
+  async function updateBroker(id, data) {
+    const { data: updated, error } = await getClient()
+      .from('broker_directory')
+      .update(normalizeBroker(data))
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return updated;
+  }
+
+  async function deleteBroker(id) {
+    const { error } = await getClient().from('broker_directory').delete().eq('id', id);
+    if (error) throw error;
+  }
+
   async function getCountryRiskSummary() {
     const { data, error } = await getClient().from('customs_records').select('country, risk_level');
     if (error) throw error;
@@ -769,6 +829,12 @@
     assignUserRoleByEmail,
     deleteUserByEmail,
     createUserAccount,
-    resetUserPasswordByEmail
+    resetUserPasswordByEmail,
+    findRouteCoordinate,
+    countryCoordinates,
+    getAllBrokers,
+    addBroker,
+    updateBroker,
+    deleteBroker
   };
 })();

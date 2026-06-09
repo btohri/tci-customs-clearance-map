@@ -83,7 +83,8 @@
     const brokerText = brokers.length
       ? brokers.map((broker) => broker.broker_name).join('、')
       : [...new Set(records.map((record) => record.broker).filter(Boolean))].join('、') || '尚無建議 Broker';
-    const notes = records.map((record) => record.issue_note).filter(Boolean);
+    const notes = [...new Set(records.map((record) => record.issue_note).filter(Boolean))];
+    const forwarders = [...new Set(records.map((record) => record.forwarder).filter(Boolean))];
 
     element.innerHTML = `
       <div class="risk-line">
@@ -102,10 +103,11 @@
       <div class="tag-list">${documents.map((doc) => `<span class="tag">${escapeHtml(doc)}</span>`).join('') || '<span class="tag">尚無文件資料</span>'}</div>
       <h3>建議 Broker</h3>
       <p>${escapeHtml(brokerText)}</p>
+      ${forwarders.length ? `<h3>貨代 Forwarder</h3><p>${escapeHtml(forwarders.join('、'))}</p>` : ''}
       <h3>異常紀錄</h3>
       <div class="tag-list">${issueTags || '<span class="tag">無重大異常</span>'}</div>
       <h3>備註</h3>
-      <p>${escapeHtml(notes[0] || '尚無備註')}</p>
+      ${notes.length ? notes.map((note) => `<p>${escapeHtml(note)}</p>`).join('') : '<p>尚無備註</p>'}
       <h3>歷史紀錄</h3>
       <div class="table-scroll">
         <table>

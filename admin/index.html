@@ -329,6 +329,60 @@
     <section class="table-card">
       <div class="table-toolbar">
         <div>
+          <h2>Broker 名錄</h2>
+          <p class="hint">維護各國/口岸的報關行與通關代理資訊，資料同步顯示於前台地圖 Broker 圖層。</p>
+        </div>
+      </div>
+      <form id="brokerForm" class="compact-form">
+        <input id="brokerId" type="hidden">
+        <div class="form-grid">
+          <label>
+            Broker 名稱
+            <input id="brokerNameInput" required>
+          </label>
+          <label>
+            國家
+            <input id="brokerCountryInput" list="countryList" required>
+          </label>
+          <label>
+            口岸
+            <input id="brokerPortInput" list="logisticsPortList">
+          </label>
+          <label>
+            聯絡資訊
+            <input id="brokerContactInput" placeholder="Email / 電話 / 公司名稱">
+          </label>
+        </div>
+        <label>
+          備註
+          <input id="brokerRemarksInput">
+        </label>
+        <div class="form-actions">
+          <button id="brokerSubmitButton" class="button primary" type="submit">新增 Broker</button>
+          <button id="brokerCancelEditButton" class="button ghost" type="button" hidden>取消編輯</button>
+        </div>
+        <p id="brokerMessage" class="message" aria-live="polite"></p>
+      </form>
+      <div class="table-scroll compact-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Broker</th>
+              <th>國家</th>
+              <th>口岸</th>
+              <th>聯絡資訊</th>
+              <th>備註</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="brokersTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="table-card">
+      <div class="table-toolbar">
+        <div>
           <h2>歷史報價</h2>
           <p class="hint">只作內部歷史參考，不代表即時真實運價。</p>
         </div>

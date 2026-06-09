@@ -37,12 +37,20 @@
     <section class="table-card">
       <div class="table-toolbar">
         <h2>通關歷史紀錄</h2>
-        <label>
-          依國家篩選
-          <select id="adminCountryFilter">
-            <option value="">全部國家</option>
-          </select>
-        </label>
+        <div class="filter-row">
+          <label>
+            依國家篩選
+            <select id="adminCountryFilter">
+              <option value="">全部國家</option>
+            </select>
+          </label>
+          <label>
+            依劑型篩選
+            <select id="adminDosageFilter">
+              <option value="">全部劑型</option>
+            </select>
+          </label>
+        </div>
       </div>
       <p id="historyMessage" class="message" aria-live="polite"></p>
       <div class="table-scroll">
@@ -63,6 +71,7 @@
           <tbody id="recordsTableBody"></tbody>
         </table>
       </div>
+      <div id="historyPagination"></div>
     </section>
   </main>
 

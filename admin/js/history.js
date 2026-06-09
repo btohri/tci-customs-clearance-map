@@ -1,7 +1,9 @@
 (function () {
   'use strict';
 
+  const PAGE_SIZE = 20;
   let records = [];
+  let currentPage = 1;
 
   const labels = {
     success: '成功',
@@ -24,19 +26,57 @@
     element.className = `message ${type}`.trim();
   }
 
-  function renderFilter() {
+  function renderFilters() {
     const countries = [...new Set(records.map((record) => window.TCIApi.normalizeCountry(record.country)).filter(Boolean))].sort();
-    const selected = field('adminCountryFilter').value;
+    const selectedCountry = field('adminCountryFilter').value;
     field('adminCountryFilter').innerHTML = '<option value="">全部國家</option>' + countries
       .map((country) => `<option value="${window.TCISearch.escapeHtml(country)}">${window.TCISearch.escapeHtml(window.TCIApi.displayCountry(country))}</option>`)
       .join('');
-    if (countries.includes(selected)) field('adminCountryFilter').value = selected;
+    if (countries.includes(selectedCountry)) field('adminCountryFilter').value = selectedCountry;
+
+    const selectedDosage = field('adminDosageFilter').value;
+    window.TCISearch.fillDosageForms(field('adminDosageFilter'));
+    // restore "全部劑型" as first option after fillDosageForms
+    field('adminDosageFilter').insertAdjacentHTML('afterbegin', '<option value="">全部劑型</option>');
+    field('adminDosageFilter').value = selectedDosage;
+  }
+
+  function getFiltered() {
+    const countryFilter = field('adminCountryFilter').value;
+    const dosageFilter = field('adminDosageFilter')?.value || '';
+    return records.filter((record) => (
+      (!countryFilter || window.TCIApi.countryMatches(record.country, countryFilter)) &&
+      (!dosageFilter || window.TCIApi.dosageMatches(record.dosage_form, dosageFilter))
+    ));
+  }
+
+  function renderPagination(total, totalPages) {
+    const el = field('historyPagination');
+    if (!el) return;
+    if (totalPages <= 1) {
+      el.innerHTML = `<p class="hint" style="text-align:center;padding:0.75rem 0">共 ${total} 筆</p>`;
+      return;
+    }
+    el.innerHTML = `
+      <div class="pagination">
+        <button class="button ghost" id="prevPageBtn" ${currentPage <= 1 ? 'disabled' : ''}>← 上一頁</button>
+        <span class="page-info">第 ${currentPage} / ${totalPages} 頁（共 ${total} 筆）</span>
+        <button class="button ghost" id="nextPageBtn" ${currentPage >= totalPages ? 'disabled' : ''}>下一頁 →</button>
+      </div>
+    `;
+    field('prevPageBtn')?.addEventListener('click', () => { currentPage--; renderTable(); });
+    field('nextPageBtn')?.addEventListener('click', () => { currentPage++; renderTable(); });
   }
 
   function renderTable() {
-    const filter = field('adminCountryFilter').value;
-    const rows = records.filter((record) => !filter || window.TCIApi.countryMatches(record.country, filter));
-    field('recordsTableBody').innerHTML = rows.map((record) => `
+    const filtered = getFiltered();
+    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageRecords = filtered.slice(start, start + PAGE_SIZE);
+
+    field('recordsTableBody').innerHTML = pageRecords.map((record) => `
       <tr>
         <td>${window.TCISearch.escapeHtml(window.TCIApi.displayCountry(record.country))}</td>
         <td>${window.TCISearch.escapeHtml(record.port)}</td>
@@ -74,18 +114,22 @@
         }
       });
     });
+
+    renderPagination(filtered.length, totalPages);
   }
 
   async function loadRecords() {
     records = await window.TCIApi.getAllRecords();
-    renderFilter();
+    currentPage = 1;
+    renderFilters();
     renderTable();
   }
 
   async function initHistory() {
     const auth = await window.TCIAuth.requireShipping();
     if (!auth) return;
-    field('adminCountryFilter').addEventListener('change', renderTable);
+    field('adminCountryFilter').addEventListener('change', () => { currentPage = 1; renderTable(); });
+    field('adminDosageFilter')?.addEventListener('change', () => { currentPage = 1; renderTable(); });
     await loadRecords();
   }
 

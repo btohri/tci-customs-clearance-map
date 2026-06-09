@@ -5,11 +5,14 @@
   let map;
   let countryLayer;
   let routeLayerGroup;
+  let brokerLayerGroup;
   let riskSummary = {};
   let routes = [];
   let quotes = [];
+  let brokers = [];
   let routesEnabled = true;
   let routesAvailable = true;
+  let brokersEnabled = false;
 
   function normalizeCountryName(name) {
     return window.TCIApi?.normalizeCountry(name) || name;
@@ -277,6 +280,84 @@
     }
   }
 
+  async function loadBrokers() {
+    try {
+      brokers = await window.TCIApi.getAllBrokers();
+    } catch {
+      brokers = [];
+    }
+  }
+
+  function drawBrokers() {
+    if (!brokerLayerGroup) return;
+    brokerLayerGroup.clearLayers();
+    if (!brokersEnabled || !brokers.length) return;
+
+    const grouped = {};
+    brokers.forEach((broker) => {
+      const country = window.TCIApi.normalizeCountry(broker.country);
+      if (!grouped[country]) grouped[country] = [];
+      grouped[country].push(broker);
+    });
+
+    Object.entries(grouped).forEach(([country, list]) => {
+      let coords = null;
+      for (const broker of list) {
+        if (broker.port) {
+          coords = window.TCIApi.findRouteCoordinate(country, broker.port);
+          if (coords) break;
+        }
+      }
+      if (!coords) coords = window.TCIApi.countryCoordinates.get(country);
+      if (!coords) return;
+
+      const marker = window.L.circleMarker([coords.lat, coords.lng], {
+        radius: 7,
+        color: '#f2b84b',
+        fillColor: '#f2b84b',
+        fillOpacity: 0.85,
+        weight: 2
+      });
+      marker.bindTooltip(`Broker: ${list.length} 家 (${window.TCISearch.escapeHtml(window.TCIApi.displayCountry(country))})`);
+      marker.on('click', () => showBrokerDetail(country, list));
+      marker.addTo(brokerLayerGroup);
+    });
+  }
+
+  function showBrokerDetail(country, list) {
+    document.getElementById('map-sidebar').innerHTML = `
+      <div class="sidebar-title">
+        <h2>${window.TCISearch.escapeHtml(window.TCIApi.displayCountry(country))}</h2>
+        <span class="risk-badge risk-none">Broker 名錄</span>
+      </div>
+      <div class="route-list">
+        ${list.map((broker) => `
+          <div class="route-card">
+            <strong>${window.TCISearch.escapeHtml(broker.broker_name)}</strong>
+            ${broker.port ? `<p class="hint">口岸：${window.TCISearch.escapeHtml(broker.port)}</p>` : ''}
+            ${broker.contact_info ? `<p>${window.TCISearch.escapeHtml(broker.contact_info)}</p>` : ''}
+            ${broker.remarks ? `<p class="hint">${window.TCISearch.escapeHtml(broker.remarks)}</p>` : ''}
+          </div>
+        `).join('')}
+      </div>
+      <button id="brokerBackButton" class="button ghost" type="button" style="margin-top:1rem">← 返回</button>
+    `;
+    document.getElementById('brokerBackButton')?.addEventListener('click', () => {
+      document.getElementById('map-sidebar').innerHTML = `<div class="empty-state"><strong>請點擊地圖上的國家開始查詢</strong><span>地圖顏色依目前通關紀錄最高風險顯示。</span></div>`;
+    });
+  }
+
+  function bindBrokerLayerToggle() {
+    const button = document.getElementById('brokerLayerToggle');
+    if (!button) return;
+    button.addEventListener('click', () => {
+      brokersEnabled = !brokersEnabled;
+      button.classList.toggle('active', brokersEnabled);
+      button.setAttribute('aria-pressed', String(brokersEnabled));
+      drawBrokers();
+    });
+  }
+
   function bindRouteLayerToggle() {
     const button = document.getElementById('routeLayerToggle');
     if (!button) return;
@@ -304,11 +385,14 @@
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
     routeLayerGroup = window.L.layerGroup().addTo(map);
+    brokerLayerGroup = window.L.layerGroup().addTo(map);
     bindRouteLayerToggle();
+    bindBrokerLayerToggle();
 
     setSidebarLoading('載入地圖資料中...');
     await refreshMapColors();
     await loadQuotes();
+    await loadBrokers();
     await loadRoutes();
     const response = await fetch(geoJsonUrl);
     const geojson = await response.json();

@@ -166,6 +166,36 @@ drop policy if exists "登入者可查詢Broker" on broker_directory;
 create policy "登入者可查詢Broker" on broker_directory
   for select using (auth.role() = 'authenticated');
 
+drop policy if exists "shipping/admin 可新增Broker" on broker_directory;
+create policy "shipping/admin 可新增Broker" on broker_directory
+  for insert with check (
+    exists (
+      select 1 from user_roles
+      where user_id = auth.uid()
+      and role in ('shipping', 'admin')
+    )
+  );
+
+drop policy if exists "shipping/admin 可編輯Broker" on broker_directory;
+create policy "shipping/admin 可編輯Broker" on broker_directory
+  for update using (
+    exists (
+      select 1 from user_roles
+      where user_id = auth.uid()
+      and role in ('shipping', 'admin')
+    )
+  );
+
+drop policy if exists "shipping/admin 可刪除Broker" on broker_directory;
+create policy "shipping/admin 可刪除Broker" on broker_directory
+  for delete using (
+    exists (
+      select 1 from user_roles
+      where user_id = auth.uid()
+      and role in ('shipping', 'admin')
+    )
+  );
+
 drop policy if exists "登入者可查詢港口資料" on ports;
 create policy "登入者可查詢港口資料" on ports
   for select using (auth.role() = 'authenticated');
