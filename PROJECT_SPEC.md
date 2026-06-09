@@ -147,6 +147,29 @@ create table broker_directory (
   remarks text
 );
 
+-- 航線風險情報
+create table route_intelligence (
+  id uuid primary key default uuid_generate_v4(),
+  route_name text not null,
+  origin_country text not null,
+  origin_port text not null,
+  origin_lat double precision,
+  origin_lng double precision,
+  destination_country text not null,
+  destination_port text not null,
+  destination_lat double precision,
+  destination_lng double precision,
+  transport_mode text check (transport_mode in ('ocean', 'air', 'multimodal')) default 'ocean',
+  risk_level text check (risk_level in ('green', 'yellow', 'red')) not null,
+  estimated_days integer,
+  distance_km integer,
+  chokepoints text,
+  route_path jsonb,
+  notes text,
+  created_at timestamp default now(),
+  last_updated timestamp default now()
+);
+
 -- 使用者角色表
 create table user_roles (
   id uuid primary key default uuid_generate_v4(),
@@ -209,6 +232,7 @@ create policy "shipping 可編輯" on customs_records
 
 - 支援地圖檢視與清單檢視 Tab。
 - 地圖使用 Leaflet + GeoJSON，依各國最高風險等級上色。
+- 地圖新增「航線風險情報 Layer」：可顯示海運/空運/複合運輸航線、航線風險、預估天數、距離與關鍵通道。
 - 國家欄位支援常見縮寫、英文、中文正規化，例如 `US` / `USA` / `美國` 會視為同一國家。
 - 劑型下拉與結果顯示採中英文對照，資料庫仍存穩定英文值。
 - 目前劑型：膠囊 Capsule、錠劑 Tablet、粉劑 Powder、軟糖 Gummy、液體 Liquid、軟膠囊 Softgel、面膜 Mask、其他 Others。
@@ -221,6 +245,7 @@ create policy "shipping 可編輯" on customs_records
 - 建議 Broker
 - 異常標籤（曾補件 / 曾扣關 / 曾延遲）
 - 備註文字
+- 相關航線風險情報（起運港、目的港、預估天數、關鍵通道）
 
 ---
 

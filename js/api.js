@@ -62,6 +62,49 @@
     return map;
   }, new Map());
   const riskRank = { green: 1, yellow: 2, red: 3 };
+  const portCoordinates = [
+    { country: 'Taiwan', aliases: ['Keelung', '基隆'], lat: 25.1504, lng: 121.7392 },
+    { country: 'Taiwan', aliases: ['Kaohsiung', '高雄'], lat: 22.6163, lng: 120.2655 },
+    { country: 'China', aliases: ['Shanghai', '上海'], lat: 31.2304, lng: 121.4737 },
+    { country: 'China', aliases: ['Shenzhen', '深圳', 'Yantian', '鹽田', '盐田'], lat: 22.5431, lng: 114.0579 },
+    { country: 'China', aliases: ['Ningbo', '寧波', '宁波'], lat: 29.8683, lng: 121.5440 },
+    { country: 'China', aliases: ['Guangzhou', '廣州', '广州'], lat: 23.1291, lng: 113.2644 },
+    { country: 'Hong Kong', aliases: ['Hong Kong', '香港'], lat: 22.3193, lng: 114.1694 },
+    { country: 'Japan', aliases: ['Tokyo', '東京'], lat: 35.6762, lng: 139.6503 },
+    { country: 'Japan', aliases: ['Yokohama', '橫濱', '横滨'], lat: 35.4437, lng: 139.6380 },
+    { country: 'Japan', aliases: ['Osaka', '大阪'], lat: 34.6937, lng: 135.5023 },
+    { country: 'Korea', aliases: ['Busan', '釜山'], lat: 35.1796, lng: 129.0756 },
+    { country: 'Korea', aliases: ['Incheon', '仁川'], lat: 37.4563, lng: 126.7052 },
+    { country: 'Singapore', aliases: ['Singapore', '新加坡'], lat: 1.2644, lng: 103.8223 },
+    { country: 'Malaysia', aliases: ['Port Klang', 'Klang', '巴生港'], lat: 3.0019, lng: 101.3928 },
+    { country: 'Thailand', aliases: ['Laem Chabang', '林查班'], lat: 13.0827, lng: 100.8837 },
+    { country: 'Vietnam', aliases: ['Ho Chi Minh', 'Cat Lai', '胡志明', '吉萊'], lat: 10.7769, lng: 106.7009 },
+    { country: 'Vietnam', aliases: ['Hai Phong', '海防'], lat: 20.8449, lng: 106.6881 },
+    { country: 'Indonesia', aliases: ['Jakarta', 'Tanjung Priok', '雅加達'], lat: -6.1045, lng: 106.8804 },
+    { country: 'Philippines', aliases: ['Manila', '馬尼拉'], lat: 14.5995, lng: 120.9842 },
+    { country: 'USA', aliases: ['Los Angeles', 'LA', 'Long Beach', '洛杉磯', '長灘', '长滩'], lat: 33.7405, lng: -118.2775 },
+    { country: 'USA', aliases: ['New York', 'NYC', 'Newark', '紐約', '纽约'], lat: 40.6895, lng: -74.1745 },
+    { country: 'USA', aliases: ['Seattle', 'Tacoma', '西雅圖'], lat: 47.6062, lng: -122.3321 },
+    { country: 'USA', aliases: ['Houston', '休士頓'], lat: 29.7604, lng: -95.3698 },
+    { country: 'Canada', aliases: ['Vancouver', '溫哥華'], lat: 49.2827, lng: -123.1207 },
+    { country: 'Canada', aliases: ['Toronto', '多倫多'], lat: 43.6532, lng: -79.3832 },
+    { country: 'UK', aliases: ['London', 'Felixstowe', '倫敦'], lat: 51.5072, lng: -0.1276 },
+    { country: 'Netherlands', aliases: ['Rotterdam', '鹿特丹'], lat: 51.9244, lng: 4.4777 },
+    { country: 'Germany', aliases: ['Hamburg', '漢堡', '汉堡'], lat: 53.5511, lng: 9.9937 },
+    { country: 'France', aliases: ['Le Havre', 'Paris', '勒阿弗爾', '巴黎'], lat: 49.4944, lng: 0.1079 },
+    { country: 'Spain', aliases: ['Barcelona', 'Valencia', '巴塞隆納', '瓦倫西亞'], lat: 41.3851, lng: 2.1734 },
+    { country: 'Italy', aliases: ['Genoa', 'Milan', '熱那亞', '米蘭'], lat: 44.4056, lng: 8.9463 },
+    { country: 'United Arab Emirates', aliases: ['Dubai', 'Jebel Ali', '杜拜'], lat: 25.2048, lng: 55.2708 },
+    { country: 'Australia', aliases: ['Sydney', 'Melbourne', '雪梨', '墨爾本'], lat: -33.8688, lng: 151.2093 },
+    { country: 'India', aliases: ['Mumbai', 'Nhava Sheva', '孟買'], lat: 19.0760, lng: 72.8777 },
+    { country: 'Brazil', aliases: ['Santos', 'São Paulo', 'Sao Paulo', '聖保羅'], lat: -23.9608, lng: -46.3336 },
+    { country: 'Mexico', aliases: ['Manzanillo', 'Mexico City', '墨西哥城'], lat: 19.4326, lng: -99.1332 }
+  ];
+  const countryCoordinates = countryAliases.reduce((map, country) => {
+    const match = portCoordinates.find((port) => normalizeCountry(port.country) === country.value);
+    if (match) map.set(country.value, { lat: match.lat, lng: match.lng });
+    return map;
+  }, new Map());
 
   function normalizeKey(value) {
     return String(value || '')
@@ -108,6 +151,23 @@
     return normalizeDosageForm(recordForm) === normalizeDosageForm(queryForm);
   }
 
+  function findRouteCoordinate(country, port) {
+    const normalizedCountry = normalizeCountry(country);
+    const portKey = normalizeKey(port);
+    const match = portCoordinates.find((item) => (
+      normalizeCountry(item.country) === normalizedCountry &&
+      item.aliases.some((alias) => portKey.includes(normalizeKey(alias)) || normalizeKey(alias).includes(portKey))
+    ));
+    if (match) return { lat: match.lat, lng: match.lng };
+    return countryCoordinates.get(normalizedCountry) || null;
+  }
+
+  function optionalNumber(value) {
+    if (value === '' || value === null || value === undefined) return null;
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
+  }
+
   function getClient() {
     if (!supabase) {
       throw new Error('尚未設定 Supabase URL / ANON KEY，請先更新 js/api.js。');
@@ -130,6 +190,54 @@
       issue_held: Boolean(data.issue_held || data.issueHeld),
       issue_delayed: Boolean(data.issue_delayed || data.issueDelayed),
       issue_note: data.issue_note || data.issueNote || null,
+      last_updated: new Date().toISOString()
+    };
+  }
+
+  function parseRoutePath(value) {
+    if (Array.isArray(value)) {
+      return value
+        .map((point) => Array.isArray(point) ? point : [point.lat, point.lng])
+        .filter((point) => point.length === 2 && point.every((item) => Number.isFinite(Number(item))))
+        .map((point) => [Number(point[0]), Number(point[1])]);
+    }
+    if (!value) return [];
+    return String(value)
+      .split(';')
+      .map((part) => part.trim().split(',').map((item) => Number(item.trim())))
+      .filter((point) => point.length === 2 && point.every(Number.isFinite));
+  }
+
+  function normalizeRoute(data) {
+    const originCountry = normalizeCountry(data.origin_country);
+    const destinationCountry = normalizeCountry(data.destination_country);
+    const originFallback = findRouteCoordinate(originCountry, data.origin_port);
+    const destinationFallback = findRouteCoordinate(destinationCountry, data.destination_port);
+    const originLat = optionalNumber(data.origin_lat) ?? originFallback?.lat ?? null;
+    const originLng = optionalNumber(data.origin_lng) ?? originFallback?.lng ?? null;
+    const destinationLat = optionalNumber(data.destination_lat) ?? destinationFallback?.lat ?? null;
+    const destinationLng = optionalNumber(data.destination_lng) ?? destinationFallback?.lng ?? null;
+    const routePath = parseRoutePath(data.route_path);
+    const fallbackPath = originLat !== null && originLng !== null && destinationLat !== null && destinationLng !== null
+      ? [[originLat, originLng], [destinationLat, destinationLng]]
+      : [];
+    return {
+      route_name: data.route_name?.trim() || `${data.origin_port} → ${data.destination_port}`,
+      origin_country: originCountry,
+      origin_port: data.origin_port?.trim(),
+      origin_lat: originLat,
+      origin_lng: originLng,
+      destination_country: destinationCountry,
+      destination_port: data.destination_port?.trim(),
+      destination_lat: destinationLat,
+      destination_lng: destinationLng,
+      transport_mode: data.transport_mode || 'ocean',
+      risk_level: data.risk_level,
+      estimated_days: Number(data.estimated_days || 0),
+      distance_km: data.distance_km ? Number(data.distance_km) : null,
+      chokepoints: data.chokepoints?.trim() || null,
+      route_path: routePath.length ? routePath : fallbackPath,
+      notes: data.notes?.trim() || null,
       last_updated: new Date().toISOString()
     };
   }
@@ -263,6 +371,50 @@
     return data || [];
   }
 
+  async function getAllRoutes() {
+    const { data, error } = await getClient()
+      .from('route_intelligence')
+      .select('*')
+      .order('route_name');
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function getRoutesForCountry(country) {
+    const routes = await getAllRoutes();
+    return routes.filter((route) => (
+      countryMatches(route.origin_country, country) ||
+      countryMatches(route.destination_country, country)
+    ));
+  }
+
+  async function addRoute(data) {
+    const payload = normalizeRoute(data);
+    const { data: inserted, error } = await getClient()
+      .from('route_intelligence')
+      .insert(payload)
+      .select()
+      .single();
+    if (error) throw error;
+    return inserted;
+  }
+
+  async function updateRoute(id, data) {
+    const { data: updated, error } = await getClient()
+      .from('route_intelligence')
+      .update(normalizeRoute(data))
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return updated;
+  }
+
+  async function deleteRoute(id) {
+    const { error } = await getClient().from('route_intelligence').delete().eq('id', id);
+    if (error) throw error;
+  }
+
   async function getCountryRiskSummary() {
     const { data, error } = await getClient().from('customs_records').select('country, risk_level');
     if (error) throw error;
@@ -390,6 +542,11 @@
     updateRecord,
     deleteRecord,
     getAllRecords,
+    getAllRoutes,
+    getRoutesForCountry,
+    addRoute,
+    updateRoute,
+    deleteRoute,
     getCountryRiskSummary,
     listUserRoleAssignments,
     isCurrentUserAdmin,

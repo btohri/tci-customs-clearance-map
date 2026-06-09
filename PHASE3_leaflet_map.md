@@ -111,6 +111,18 @@ async function getCountryRiskSummary() {
 | 🔴 Red | #FCEBEB | #E24B4A |
 | 無資料 | #F1EFE8 | #B4B2A9 |
 
+### 航線風險情報 Layer
+
+地圖支援額外顯示 `route_intelligence` 航線圖層：
+
+- 航線資料由 Supabase `route_intelligence` 表維護。
+- 前台讀取全部航線後，以 Leaflet polyline 畫在地圖上。
+- 若 `route_path` 有多點座標，依座標序列畫實際路徑；若未填，系統會依常見港口或國家預設座標推定起訖點。
+- 後台日常維護不要求輸入緯經度；座標與路徑只放在進階選填區。
+- 點擊國家時，側欄除口岸清單外，也顯示與該國相關的起運/目的航線。
+- 點擊航線線段時，側欄顯示航線名稱、運輸方式、風險、天數、距離、關鍵通道與備註。
+- 航線圖層可由上方 `航線情報` 按鈕切換顯示/隱藏。
+
 ### 國家名稱對應
 
 GeoJSON 內的國家名稱（英文）需對應到 Supabase 的 `country` 欄位。

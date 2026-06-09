@@ -14,7 +14,8 @@
     </a>
     <nav class="nav-links">
       <a href="../index.html">查詢</a>
-      <a id="adminNavLink" aria-current="page" href="index.html">後台</a>
+      <a id="adminNavLink" aria-current="page" href="index.html">船務後台</a>
+      <a id="userManagementNavLink" href="users.html" hidden>使用者管理</a>
     </nav>
     <div class="user-area">
       <span id="userMeta">載入中...</span>
@@ -32,69 +33,164 @@
       <span class="brand-chip">TCI Admin Console</span>
     </section>
 
-    <form id="recordForm" class="admin-form">
-      <input id="recordId" type="hidden">
-      <div class="form-grid">
+    <section class="admin-entry-grid">
+      <form id="recordForm" class="admin-form">
+        <input id="recordId" type="hidden">
+        <h2>通關紀錄</h2>
+        <div class="form-grid">
+          <label>
+            國家
+            <input id="countryInput" list="countryList" required>
+            <datalist id="countryList"></datalist>
+          </label>
+          <label>
+            口岸
+            <input id="portInput" list="portList" required>
+            <datalist id="portList"></datalist>
+          </label>
+          <label>
+            劑型
+            <select id="dosageFormInput" required></select>
+          </label>
+          <label>
+            通關結果
+            <select id="clearanceResultInput" required>
+              <option value="">請選擇</option>
+              <option value="success">成功</option>
+              <option value="delayed">延遲</option>
+              <option value="held">扣關</option>
+              <option value="rejected">退運</option>
+            </select>
+          </label>
+          <label>
+            通關天數
+            <input id="clearanceDaysInput" type="number" min="0" required>
+          </label>
+          <label>
+            風險等級
+            <select id="riskLevelInput" required>
+              <option value="">請選擇</option>
+              <option value="green">Green</option>
+              <option value="yellow">Yellow</option>
+              <option value="red">Red</option>
+            </select>
+          </label>
+        </div>
         <label>
-          國家
-          <input id="countryInput" list="countryList" required>
-          <datalist id="countryList"></datalist>
+          所需文件
+          <input id="requiredDocumentsInput" placeholder="COA, GMP Certificate" required>
         </label>
         <label>
-          口岸
-          <input id="portInput" list="portList" required>
-          <datalist id="portList"></datalist>
+          建議 Broker
+          <input id="brokerInput">
         </label>
+        <fieldset class="checkbox-row">
+          <legend>異常紀錄</legend>
+          <label><input id="issueSupplementInput" type="checkbox">曾補件</label>
+          <label><input id="issueHeldInput" type="checkbox">曾扣關</label>
+          <label><input id="issueDelayedInput" type="checkbox">曾延遲</label>
+        </fieldset>
         <label>
-          劑型
-          <select id="dosageFormInput" required></select>
+          備註
+          <textarea id="issueNoteInput"></textarea>
         </label>
+        <div class="form-actions">
+          <button id="submitButton" class="button primary" type="submit">新增紀錄</button>
+          <button id="cancelEditButton" class="button ghost" type="button" hidden>取消編輯</button>
+        </div>
+        <p id="adminMessage" class="message" aria-live="polite"></p>
+      </form>
+
+      <form id="routeForm" class="admin-form">
+        <input id="routeId" type="hidden">
+        <h2>航線風險情報</h2>
+        <p class="hint">日常只需填國家、港口、風險與天數；座標可由系統依常見港口或國家位置推定。</p>
+        <div class="form-grid">
+          <label>
+            航線名稱
+            <input id="routeNameInput" placeholder="Shanghai → Los Angeles">
+          </label>
+          <label>
+            運輸方式
+            <select id="transportModeInput" required>
+              <option value="ocean">海運</option>
+              <option value="air">空運</option>
+              <option value="multimodal">複合運輸</option>
+            </select>
+          </label>
+          <label>
+            起運國家
+            <input id="originCountryInput" list="countryList" required>
+          </label>
+          <label>
+            起運港
+            <input id="originPortInput" required>
+          </label>
+          <label>
+            目的國家
+            <input id="destinationCountryInput" list="countryList" required>
+          </label>
+          <label>
+            目的港
+            <input id="destinationPortInput" required>
+          </label>
+          <label>
+            預估天數
+            <input id="routeDaysInput" type="number" min="0" required>
+          </label>
+          <label>
+            距離 km
+            <input id="routeDistanceInput" type="number" min="0">
+          </label>
+          <label>
+            航線風險
+            <select id="routeRiskInput" required>
+              <option value="green">Green</option>
+              <option value="yellow">Yellow</option>
+              <option value="red">Red</option>
+            </select>
+          </label>
+          <label>
+            關鍵通道
+            <input id="chokepointsInput" placeholder="Malacca, Suez">
+          </label>
+        </div>
+        <details class="advanced-fields">
+          <summary>進階座標設定</summary>
+          <div class="form-grid">
+            <label>
+              起點緯度
+              <input id="originLatInput" type="number" step="0.000001">
+            </label>
+            <label>
+              起點經度
+              <input id="originLngInput" type="number" step="0.000001">
+            </label>
+            <label>
+              終點緯度
+              <input id="destinationLatInput" type="number" step="0.000001">
+            </label>
+            <label>
+              終點經度
+              <input id="destinationLngInput" type="number" step="0.000001">
+            </label>
+          </div>
+          <label>
+            路徑座標
+            <textarea id="routePathInput" placeholder="31.2304,121.4737; 1.3521,103.8198; 33.7405,-118.2775"></textarea>
+          </label>
+        </details>
         <label>
-          通關結果
-          <select id="clearanceResultInput" required>
-            <option value="">請選擇</option>
-            <option value="success">成功</option>
-            <option value="delayed">延遲</option>
-            <option value="held">扣關</option>
-            <option value="rejected">退運</option>
-          </select>
+          航線備註
+          <textarea id="routeNotesInput"></textarea>
         </label>
-        <label>
-          通關天數
-          <input id="clearanceDaysInput" type="number" min="0" required>
-        </label>
-        <label>
-          風險等級
-          <select id="riskLevelInput" required>
-            <option value="">請選擇</option>
-            <option value="green">Green</option>
-            <option value="yellow">Yellow</option>
-            <option value="red">Red</option>
-          </select>
-        </label>
-      </div>
-      <label>
-        所需文件
-        <input id="requiredDocumentsInput" placeholder="COA, GMP Certificate" required>
-      </label>
-      <label>
-        建議 Broker
-        <input id="brokerInput">
-      </label>
-      <fieldset class="checkbox-row">
-        <legend>異常紀錄</legend>
-        <label><input id="issueSupplementInput" type="checkbox">曾補件</label>
-        <label><input id="issueHeldInput" type="checkbox">曾扣關</label>
-        <label><input id="issueDelayedInput" type="checkbox">曾延遲</label>
-      </fieldset>
-      <label>
-        備註
-        <textarea id="issueNoteInput"></textarea>
-      </label>
-      <button id="submitButton" class="button primary" type="submit">新增紀錄</button>
-      <button id="cancelEditButton" class="button ghost" type="button" hidden>取消編輯</button>
-      <p id="adminMessage" class="message" aria-live="polite"></p>
-    </form>
+        <div class="form-actions">
+          <button id="routeSubmitButton" class="button primary" type="submit">新增航線</button>
+          <button id="routeCancelEditButton" class="button ghost" type="button" hidden>取消編輯</button>
+        </div>
+        <p id="routeMessage" class="message" aria-live="polite"></p>
+      </form>
+    </section>
 
     <section class="table-card">
       <div class="table-toolbar">
@@ -125,65 +221,25 @@
       </div>
     </section>
 
-    <section id="roleManagementSection" class="table-card" hidden>
+    <section class="table-card">
       <div class="table-toolbar">
-        <div>
-          <h2>使用者角色管理</h2>
-          <p class="hint">Admin 可直接建立新帳號，也可修改或刪除既有帳號。</p>
-        </div>
+        <h2>航線情報管理</h2>
       </div>
 
-      <form id="createUserForm" class="role-form create-user-form">
-        <label>
-          新使用者 Email
-          <input id="newUserEmailInput" type="email" placeholder="name@tci-bio.com" required>
-        </label>
-        <label>
-          暫時密碼
-          <input id="newUserPasswordInput" type="password" minlength="6" required>
-        </label>
-        <label>
-          角色
-          <select id="newUserRoleSelect" required>
-            <option value="user">user</option>
-            <option value="shipping">shipping</option>
-            <option value="admin">admin</option>
-          </select>
-        </label>
-        <button class="button primary" type="submit">建立帳號</button>
-      </form>
-      <p id="createUserMessage" class="message" aria-live="polite"></p>
-
-      <form id="roleForm" class="role-form">
-        <label>
-          既有使用者 Email
-          <select id="roleEmailInput" required>
-            <option value="">請選擇使用者</option>
-          </select>
-        </label>
-        <label>
-          角色
-          <select id="roleSelect" required>
-            <option value="user">user</option>
-            <option value="shipping">shipping</option>
-            <option value="admin">admin</option>
-          </select>
-        </label>
-        <button id="saveRoleButton" class="button primary" type="submit">儲存角色</button>
-        <button id="deleteUserButton" class="button danger" type="button">刪除帳號</button>
-      </form>
-      <p id="roleMessage" class="message" aria-live="polite"></p>
       <div class="table-scroll">
         <table>
           <thead>
             <tr>
-              <th>Email</th>
-              <th>角色</th>
-              <th>User ID</th>
-              <th>建立日期</th>
+              <th>航線</th>
+              <th>方式</th>
+              <th>起點</th>
+              <th>終點</th>
+              <th>天數</th>
+              <th>風險</th>
+              <th>操作</th>
             </tr>
           </thead>
-          <tbody id="rolesTableBody"></tbody>
+          <tbody id="routesTableBody"></tbody>
         </table>
       </div>
     </section>

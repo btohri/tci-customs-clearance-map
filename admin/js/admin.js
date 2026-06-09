@@ -2,7 +2,7 @@
   'use strict';
 
   let records = [];
-  let roleAssignments = [];
+  let routes = [];
 
   const labels = {
     success: '成功',
@@ -12,6 +12,12 @@
     green: 'Green',
     yellow: 'Yellow',
     red: 'Red'
+  };
+
+  const transportLabels = {
+    ocean: '海運',
+    air: '空運',
+    multimodal: '複合運輸'
   };
 
   function field(id) {
@@ -24,15 +30,8 @@
     element.className = `message ${type}`.trim();
   }
 
-  function roleMessage(text, type = '') {
-    const element = field('roleMessage');
-    if (!element) return;
-    element.textContent = text;
-    element.className = `message ${type}`.trim();
-  }
-
-  function createUserMessage(text, type = '') {
-    const element = field('createUserMessage');
+  function routeMessage(text, type = '') {
+    const element = field('routeMessage');
     if (!element) return;
     element.textContent = text;
     element.className = `message ${type}`.trim();
@@ -78,10 +77,82 @@
     setFormData({});
   }
 
+  function getRouteFormData() {
+    const optionalNumber = (id) => field(id).value === '' ? null : Number(field(id).value);
+    return {
+      route_name: field('routeNameInput').value.trim(),
+      origin_country: window.TCIApi.normalizeCountry(field('originCountryInput').value),
+      origin_port: field('originPortInput').value.trim(),
+      origin_lat: optionalNumber('originLatInput'),
+      origin_lng: optionalNumber('originLngInput'),
+      destination_country: window.TCIApi.normalizeCountry(field('destinationCountryInput').value),
+      destination_port: field('destinationPortInput').value.trim(),
+      destination_lat: optionalNumber('destinationLatInput'),
+      destination_lng: optionalNumber('destinationLngInput'),
+      transport_mode: field('transportModeInput').value,
+      risk_level: field('routeRiskInput').value,
+      estimated_days: Number(field('routeDaysInput').value),
+      distance_km: field('routeDistanceInput').value ? Number(field('routeDistanceInput').value) : null,
+      chokepoints: field('chokepointsInput').value.trim(),
+      route_path: field('routePathInput').value.trim(),
+      notes: field('routeNotesInput').value.trim()
+    };
+  }
+
+  function routePathToText(routePath) {
+    if (!Array.isArray(routePath)) return '';
+    return routePath
+      .map((point) => Array.isArray(point) ? point : [point.lat, point.lng])
+      .filter((point) => point.length === 2)
+      .map((point) => `${point[0]},${point[1]}`)
+      .join('; ');
+  }
+
+  function setRouteFormData(route) {
+    field('routeId').value = route.id || '';
+    field('routeNameInput').value = route.route_name || '';
+    field('originCountryInput').value = route.origin_country ? window.TCIApi.displayCountry(route.origin_country) : '';
+    field('originPortInput').value = route.origin_port || '';
+    field('originLatInput').value = route.origin_lat ?? '';
+    field('originLngInput').value = route.origin_lng ?? '';
+    field('destinationCountryInput').value = route.destination_country ? window.TCIApi.displayCountry(route.destination_country) : '';
+    field('destinationPortInput').value = route.destination_port || '';
+    field('destinationLatInput').value = route.destination_lat ?? '';
+    field('destinationLngInput').value = route.destination_lng ?? '';
+    field('transportModeInput').value = route.transport_mode || 'ocean';
+    field('routeRiskInput').value = route.risk_level || 'green';
+    field('routeDaysInput').value = route.estimated_days ?? '';
+    field('routeDistanceInput').value = route.distance_km ?? '';
+    field('chokepointsInput').value = route.chokepoints || '';
+    field('routePathInput').value = routePathToText(route.route_path);
+    field('routeNotesInput').value = route.notes || '';
+    field('routeSubmitButton').textContent = route.id ? '儲存航線' : '新增航線';
+    field('routeCancelEditButton').hidden = !route.id;
+  }
+
+  function resetRouteForm() {
+    field('routeForm').reset();
+    setRouteFormData({});
+  }
+
   function validate(data) {
     const required = ['country', 'port', 'dosage_form', 'clearance_result', 'required_documents', 'risk_level'];
     if (required.some((key) => !data[key]) || Number.isNaN(data.clearance_days)) {
       throw new Error('請填寫所有必填欄位。');
+    }
+  }
+
+  function validateRoute(data) {
+    const required = [
+      'origin_country',
+      'origin_port',
+      'destination_country',
+      'destination_port',
+      'transport_mode',
+      'risk_level'
+    ];
+    if (required.some((key) => !data[key]) || !Number.isFinite(data.estimated_days)) {
+      throw new Error('請填寫航線必填欄位。');
     }
   }
 
@@ -150,105 +221,56 @@
     renderTable();
   }
 
-  function renderRolesTable() {
-    field('rolesTableBody').innerHTML = roleAssignments.map((item) => `
+  function renderRoutesTable() {
+    const body = field('routesTableBody');
+    if (!body) return;
+    body.innerHTML = routes.map((route) => `
       <tr>
-        <td>${window.TCISearch.escapeHtml(item.email)}</td>
-        <td>${window.TCISearch.escapeHtml(item.role)}</td>
-        <td>${window.TCISearch.escapeHtml(item.user_id)}</td>
-        <td>${window.TCISearch.escapeHtml((item.created_at || '').slice(0, 10))}</td>
+        <td>${window.TCISearch.escapeHtml(route.route_name)}</td>
+        <td>${window.TCISearch.escapeHtml(transportLabels[route.transport_mode] || route.transport_mode)}</td>
+        <td>${window.TCISearch.escapeHtml(window.TCIApi.displayCountry(route.origin_country))}<br>${window.TCISearch.escapeHtml(route.origin_port)}</td>
+        <td>${window.TCISearch.escapeHtml(window.TCIApi.displayCountry(route.destination_country))}<br>${window.TCISearch.escapeHtml(route.destination_port)}</td>
+        <td>${window.TCISearch.escapeHtml(route.estimated_days || '--')}</td>
+        <td>${window.TCISearch.escapeHtml(labels[route.risk_level] || route.risk_level)}</td>
+        <td>
+          <div class="action-row">
+            <button class="button ghost route-edit-button" type="button" data-id="${route.id}">編輯</button>
+            <button class="button danger route-delete-button" type="button" data-id="${route.id}">刪除</button>
+          </div>
+        </td>
       </tr>
     `).join('');
+
+    document.querySelectorAll('.route-edit-button').forEach((button) => {
+      button.addEventListener('click', () => {
+        const route = routes.find((item) => item.id === button.dataset.id);
+        if (route) setRouteFormData(route);
+      });
+    });
+
+    document.querySelectorAll('.route-delete-button').forEach((button) => {
+      button.addEventListener('click', async () => {
+        if (!confirm('確定要刪除此筆航線情報？')) return;
+        try {
+          await window.TCIApi.deleteRoute(button.dataset.id);
+          routeMessage('航線已刪除。', 'success');
+          await loadRoutes();
+        } catch (error) {
+          routeMessage(error.message, 'error');
+        }
+      });
+    });
   }
 
-  function renderRoleSelect() {
-    const select = field('roleEmailInput');
-    if (!select) return;
-    const selectedEmail = select.value;
-    select.innerHTML = '<option value="">請選擇使用者</option>' + roleAssignments.map((item) => `
-      <option value="${window.TCISearch.escapeHtml(item.email)}" data-role="${window.TCISearch.escapeHtml(item.role)}">
-        ${window.TCISearch.escapeHtml(item.email)}｜${window.TCISearch.escapeHtml(item.role)}
-      </option>
-    `).join('');
-    if (roleAssignments.some((item) => item.email === selectedEmail)) {
-      select.value = selectedEmail;
+  async function loadRoutes() {
+    try {
+      routes = await window.TCIApi.getAllRoutes();
+      renderRoutesTable();
+    } catch (error) {
+      routes = [];
+      renderRoutesTable();
+      routeMessage(`航線資料表尚未啟用：${error.message}`, 'error');
     }
-  }
-
-  function syncSelectedUserRole() {
-    const email = field('roleEmailInput')?.value;
-    const selected = roleAssignments.find((item) => item.email === email);
-    if (selected) {
-      field('roleSelect').value = selected.role;
-    }
-  }
-
-  async function loadRoleAssignments() {
-    roleAssignments = await window.TCIApi.listUserRoleAssignments();
-    renderRoleSelect();
-    syncSelectedUserRole();
-    renderRolesTable();
-  }
-
-  function bindRoleForm() {
-    field('createUserForm')?.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const email = field('newUserEmailInput').value.trim();
-      const password = field('newUserPasswordInput').value;
-      const role = field('newUserRoleSelect').value;
-      try {
-        createUserMessage('建立中...');
-        const created = await window.TCIApi.createUserAccount(email, password, role);
-        createUserMessage(created?.fallback
-          ? '帳號已建立，角色已完成指派。若帳號尚未驗證，請使用者依信件完成驗證。'
-          : '帳號已建立，角色已完成指派。', 'success');
-        field('createUserForm').reset();
-        await loadRoleAssignments();
-      } catch (error) {
-        createUserMessage(error.message, 'error');
-      }
-    });
-
-    field('roleForm')?.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const email = field('roleEmailInput').value;
-      const role = field('roleSelect').value;
-      if (!email) {
-        roleMessage('請先選擇使用者。', 'error');
-        return;
-      }
-      try {
-        roleMessage('儲存中...');
-        await window.TCIApi.assignUserRoleByEmail(email, role);
-        roleMessage('角色已更新。', 'success');
-        await loadRoleAssignments();
-      } catch (error) {
-        roleMessage(error.message, 'error');
-      }
-    });
-
-    field('roleEmailInput')?.addEventListener('change', syncSelectedUserRole);
-
-    field('deleteUserButton')?.addEventListener('click', async () => {
-      const email = field('roleEmailInput').value;
-      if (!email) {
-        roleMessage('請先選擇使用者。', 'error');
-        return;
-      }
-      if (!confirm(`確定要刪除 ${email}？此動作會移除登入帳號與角色設定。`)) return;
-      try {
-        field('deleteUserButton').disabled = true;
-        roleMessage('刪除中...');
-        await window.TCIApi.deleteUserByEmail(email);
-        roleMessage('帳號已刪除。', 'success');
-        field('roleForm').reset();
-        await loadRoleAssignments();
-      } catch (error) {
-        roleMessage(error.message, 'error');
-      } finally {
-        field('deleteUserButton').disabled = false;
-      }
-    });
   }
 
   function bindForm() {
@@ -279,21 +301,41 @@
     field('adminCountryFilter').addEventListener('change', renderTable);
   }
 
+  function bindRouteForm() {
+    field('routeForm')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      try {
+        const data = getRouteFormData();
+        validateRoute(data);
+        const id = field('routeId').value;
+        field('routeSubmitButton').disabled = true;
+        if (id) {
+          await window.TCIApi.updateRoute(id, data);
+          routeMessage('航線已更新。', 'success');
+        } else {
+          await window.TCIApi.addRoute(data);
+          routeMessage('航線已新增。', 'success');
+        }
+        resetRouteForm();
+        await loadRoutes();
+      } catch (error) {
+        routeMessage(error.message, 'error');
+      } finally {
+        field('routeSubmitButton').disabled = false;
+      }
+    });
+
+    field('routeCancelEditButton')?.addEventListener('click', resetRouteForm);
+  }
+
   async function initAdmin() {
     const auth = await window.TCIAuth.requireShipping();
     if (!auth) return;
     window.TCISearch.fillDosageForms(field('dosageFormInput'));
     bindForm();
+    bindRouteForm();
     await loadRecords();
-    if (auth.role === 'admin') {
-      field('roleManagementSection').hidden = false;
-      bindRoleForm();
-      try {
-        await loadRoleAssignments();
-      } catch (error) {
-        roleMessage(`角色管理尚未啟用：${error.message}`, 'error');
-      }
-    }
+    await loadRoutes();
   }
 
   document.addEventListener('DOMContentLoaded', () => {

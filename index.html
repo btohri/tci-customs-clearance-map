@@ -27,10 +27,29 @@
   <main class="page-shell">
     <section class="page-heading">
       <div>
-        <p class="eyebrow">TCI Customs Clearance Knowledge Base</p>
+        <p class="eyebrow">TCI Customs Clearance Intelligence Grid</p>
         <h1>全球通關查詢</h1>
       </div>
-      <span class="brand-chip">Internal Logistics Intelligence</span>
+      <span class="brand-chip">LIVE OPS</span>
+    </section>
+
+    <section class="mission-strip" aria-label="系統狀態">
+      <div class="mission-stat">
+        <span>資料國家</span>
+        <strong id="countryCount">--</strong>
+      </div>
+      <div class="mission-stat">
+        <span>風險國家</span>
+        <strong id="riskCountryCount">--</strong>
+      </div>
+      <div class="mission-stat">
+        <span>航線情報</span>
+        <strong id="routeCount">--</strong>
+      </div>
+      <div class="mission-stat">
+        <span>最後同步</span>
+        <strong id="lastSyncTime">--:--</strong>
+      </div>
     </section>
 
     <div class="tabs" role="tablist" aria-label="查詢模式">
@@ -39,6 +58,17 @@
     </div>
 
     <section id="mapView" class="view-panel active" aria-labelledby="mapTab">
+      <div class="layer-console" aria-label="地圖圖層">
+        <span class="console-label">LAYERS</span>
+        <button class="layer-pill active" type="button">通關風險</button>
+        <button id="routeLayerToggle" class="layer-pill active" type="button" aria-pressed="true">航線情報</button>
+        <button class="layer-pill" type="button">Broker 情報</button>
+        <div class="risk-legend" aria-label="風險圖例">
+          <span><i class="legend-dot green"></i>Green</span>
+          <span><i class="legend-dot yellow"></i>Yellow</span>
+          <span><i class="legend-dot red"></i>Red</span>
+        </div>
+      </div>
       <div id="map-container">
         <div id="map" aria-label="世界通關風險地圖"></div>
         <aside id="map-sidebar" aria-live="polite">
