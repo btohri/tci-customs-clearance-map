@@ -218,7 +218,7 @@ tbody tr:hover {
 }
 
 .page-shell {
-  width: min(1360px, calc(100% - 2rem));
+  width: min(1760px, calc(100% - 2rem));
   margin: 0 auto;
   padding: 1.5rem 0 2.5rem;
   animation: pageEnter 0.38s ease both;
@@ -638,8 +638,8 @@ tbody tr:hover {
 
 #map-container {
   display: flex;
-  height: calc(100vh - 276px);
-  min-height: 540px;
+  height: calc(100vh - 230px);
+  min-height: 620px;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;

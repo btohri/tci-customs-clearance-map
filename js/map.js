@@ -57,17 +57,32 @@
     }[risk] || '#8FA4B8';
   }
 
+  // 經度展開：跨越換日線（180 度）時調整 ±360，
+  // 避免跨太平洋航線被 Leaflet 反方向畫過大西洋
+  function unwrapPath(path) {
+    if (path.length < 2) return path;
+    const result = [path[0]];
+    for (let i = 1; i < path.length; i += 1) {
+      const prevLng = result[i - 1][1];
+      let lng = path[i][1];
+      while (lng - prevLng > 180) lng -= 360;
+      while (lng - prevLng < -180) lng += 360;
+      result.push([path[i][0], lng]);
+    }
+    return result;
+  }
+
   function normalizeRoutePath(route) {
     const path = Array.isArray(route.route_path) ? route.route_path : [];
     const validPath = path
       .map((point) => Array.isArray(point) ? point : [point.lat, point.lng])
       .filter((point) => point.length === 2 && point.every((item) => Number.isFinite(Number(item))))
       .map((point) => [Number(point[0]), Number(point[1])]);
-    if (validPath.length >= 2) return validPath;
-    return [
+    if (validPath.length >= 2) return unwrapPath(validPath);
+    return unwrapPath([
       [Number(route.origin_lat), Number(route.origin_lng)],
       [Number(route.destination_lat), Number(route.destination_lng)]
-    ].filter((point) => point.every((item) => Number.isFinite(item)));
+    ].filter((point) => point.every((item) => Number.isFinite(item))));
   }
 
   function routeMatchesCountry(route, country) {
