@@ -388,12 +388,12 @@ export async function getBrokers(country) { ... }
 
 ---
 
-## V2 規劃（參考）
+## V2 規劃
 
-- Cloudflare Worker 取代直接 Supabase 呼叫
-- AI 自動判斷風險等級（Azure OpenAI）
-- 自然語言搜尋（「印尼 Gummy 好進嗎？」）
-- 成分管理、法規限制、國家准入規則
+詳見 **`V2_PLAN.md`**（2026-06-12 更新）。重點：
+P1 規則式航線風險建議燈號（用既有天氣/通關統計/LPI 訊號）→ P2 AI 風險判斷（Azure OpenAI）
+→ P3 自然語言搜尋 → P4 Cloudflare Worker 架構演進。
+即時航運風險（AIS/港口壅塞）無免費 API，維持「自動建議 + 人工確認」模式。
 
 ---
 
