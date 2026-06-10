@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>航線管理 | TCI 通關地圖</title>
-  <link rel="stylesheet" href="../css/style.css?v=20260611-ui">
+  <link rel="stylesheet" href="../css/style.css?v=20260612-admin">
 </head>
-<body data-page="routes">
+<body data-page="routes" class="admin-console">
   <header class="topbar">
     <a class="brand" href="../index.html">
       <img src="../TCI.png" alt="TCI">
@@ -41,6 +41,7 @@
     <datalist id="countryList"></datalist>
     <datalist id="logisticsPortList"></datalist>
 
+    <div class="admin-split">
     <section class="table-card">
       <form id="routeForm" class="admin-form">
         <input id="routeId" type="hidden">
@@ -157,6 +158,7 @@
         </table>
       </div>
     </section>
+    </div>
   </main>
 
   <div id="passwordDialog" class="modal-backdrop" hidden>
@@ -181,9 +183,9 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../js/api.js?v=20260611-ui"></script>
-  <script src="../js/auth.js?v=20260611-ui"></script>
-  <script src="../js/search.js?v=20260611-ui"></script>
-  <script src="js/routes.js?v=20260611-ui"></script>
+  <script src="../js/api.js?v=20260612-admin"></script>
+  <script src="../js/auth.js?v=20260612-admin"></script>
+  <script src="../js/search.js?v=20260612-admin"></script>
+  <script src="js/routes.js?v=20260612-admin"></script>
 </body>
 </html>

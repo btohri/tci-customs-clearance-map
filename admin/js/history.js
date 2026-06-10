@@ -41,6 +41,12 @@
     field('adminDosageFilter').value = selectedDosage;
   }
 
+  const resultTone = { success: 'green', delayed: 'yellow', held: 'red', rejected: 'red' };
+
+  function badge(text, tone) {
+    return `<span class="cell-badge badge-${tone || 'neutral'}">${window.TCISearch.escapeHtml(text)}</span>`;
+  }
+
   function getFiltered() {
     const countryFilter = field('adminCountryFilter').value;
     const dosageFilter = field('adminDosageFilter')?.value || '';
@@ -81,9 +87,9 @@
         <td>${window.TCISearch.escapeHtml(window.TCIApi.displayCountry(record.country))}</td>
         <td>${window.TCISearch.escapeHtml(record.port)}</td>
         <td>${window.TCISearch.escapeHtml(window.TCIApi.displayDosageForm(record.dosage_form))}</td>
-        <td>${window.TCISearch.escapeHtml(labels[record.clearance_result] || record.clearance_result)}</td>
+        <td>${badge(labels[record.clearance_result] || record.clearance_result, resultTone[record.clearance_result])}</td>
         <td>${window.TCISearch.escapeHtml(record.clearance_days)}</td>
-        <td>${window.TCISearch.escapeHtml(labels[record.risk_level] || record.risk_level)}</td>
+        <td>${badge(labels[record.risk_level] || record.risk_level, record.risk_level)}</td>
         <td>${window.TCISearch.escapeHtml(record.required_documents)}</td>
         <td>${window.TCISearch.escapeHtml((record.last_updated || record.created_at || '').slice(0, 10))}</td>
         <td>

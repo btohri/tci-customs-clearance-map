@@ -148,7 +148,7 @@
         <td>${window.TCISearch.escapeHtml(window.TCIApi.displayCountry(route.origin_country))}<br>${window.TCISearch.escapeHtml(route.origin_port)}</td>
         <td>${window.TCISearch.escapeHtml(window.TCIApi.displayCountry(route.destination_country))}<br>${window.TCISearch.escapeHtml(route.destination_port)}</td>
         <td>${window.TCISearch.escapeHtml(route.estimated_days || '--')}</td>
-        <td>${window.TCISearch.escapeHtml(labels[route.risk_level] || route.risk_level)}</td>
+        <td><span class="cell-badge badge-${route.risk_level || 'neutral'}">${window.TCISearch.escapeHtml(labels[route.risk_level] || route.risk_level)}</span></td>
         <td>
           <div class="action-row">
             <button class="button ghost route-edit-button" type="button" data-id="${route.id}">編輯</button>

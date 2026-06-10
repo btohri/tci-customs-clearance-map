@@ -188,15 +188,19 @@
     routes.forEach((route) => {
       const path = normalizeRoutePath(route);
       if (path.length < 2) return;
-      const line = window.L.polyline(path, {
-        color: routeColor(route.risk_level),
-        opacity: 0.88,
-        weight: route.risk_level === 'red' ? 4 : 3,
-        dashArray: route.transport_mode === 'air' ? '6 8' : ''
+      // Leaflet 向量線不會隨世界複本重複，跨換日線航線需要多畫 ±360 度複本
+      [0, -360, 360].forEach((shift) => {
+        const shifted = shift === 0 ? path : path.map(([lat, lng]) => [lat, lng + shift]);
+        const line = window.L.polyline(shifted, {
+          color: routeColor(route.risk_level),
+          opacity: 0.88,
+          weight: route.risk_level === 'red' ? 4 : 3,
+          dashArray: route.transport_mode === 'air' ? '6 8' : ''
+        });
+        line.bindPopup(renderRoutePopup(route));
+        line.on('click', () => showRouteDetail(route));
+        line.addTo(routeLayerGroup);
       });
-      line.bindPopup(renderRoutePopup(route));
-      line.on('click', () => showRouteDetail(route));
-      line.addTo(routeLayerGroup);
     });
   }
 

@@ -652,6 +652,10 @@ tbody tr:hover {
   height: 100%;
 }
 
+#map .leaflet-interactive:focus {
+  outline: none;
+}
+
 #map .leaflet-tile {
   filter: saturate(0.8) invert(0.9) hue-rotate(175deg) brightness(0.72) contrast(1.08);
 }
@@ -1098,5 +1102,133 @@ tbody tr:hover {
   .risk-legend {
     width: 100%;
     margin-left: 0;
+  }
+}
+
+/* ===== 管理後台版面（V1.6）===== */
+
+/* 左側固定導覽（僅管理頁，body.admin-console） */
+body.admin-console .nav-links {
+  position: fixed;
+  top: 64px;
+  left: 0;
+  bottom: 0;
+  z-index: 400;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  width: 200px;
+  margin-left: 0;
+  padding: 1rem 0.7rem;
+  border-right: 1px solid var(--line);
+  background: rgba(7, 17, 29, 0.94);
+  overflow-y: auto;
+}
+
+body.admin-console .nav-links a {
+  padding: 0.6rem 0.85rem;
+  border-left: 3px solid transparent;
+  border-radius: 0 8px 8px 0;
+}
+
+body.admin-console .nav-links a[aria-current="page"] {
+  border-left-color: var(--brand-dark);
+  transform: none;
+}
+
+body.admin-console .nav-links a:hover {
+  transform: none;
+}
+
+body.admin-console .page-shell {
+  width: auto;
+  margin-left: 216px;
+  margin-right: 0;
+  padding-left: 0.5rem;
+  padding-right: 1.25rem;
+}
+
+/* 左表單右清單 */
+.admin-split {
+  display: grid;
+  grid-template-columns: minmax(360px, 460px) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+/* 表頭固定（捲動時保持可見） */
+.table-scroll {
+  max-height: 70vh;
+  overflow: auto;
+}
+
+.table-scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #0e2033;
+}
+
+.compact-table table {
+  min-width: 640px;
+}
+
+/* 狀態色小標籤 */
+.cell-badge {
+  display: inline-block;
+  padding: 0.18rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.cell-badge.badge-green {
+  color: #5af0bd;
+  background: var(--green-bg);
+}
+
+.cell-badge.badge-yellow {
+  color: #f2b84b;
+  background: var(--yellow-bg);
+}
+
+.cell-badge.badge-red {
+  color: #ff7b86;
+  background: var(--red-bg);
+}
+
+.cell-badge.badge-neutral {
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+@media (max-width: 1180px) {
+  .admin-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  body.admin-console .nav-links {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: auto;
+    padding: 0;
+    border-right: none;
+    background: none;
+    overflow: visible;
+  }
+
+  body.admin-console .nav-links a {
+    border-left: none;
+    border-radius: 8px;
+  }
+
+  body.admin-console .page-shell {
+    width: min(1760px, calc(100% - 2rem));
+    margin: 0 auto;
+    padding-left: 0;
   }
 }
