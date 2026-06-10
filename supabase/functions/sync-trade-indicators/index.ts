@@ -57,6 +57,15 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  // 選用防濫用：有設定 SYNC_TOKEN secret 時，要求請求帶相同的 x-sync-token
+  const requiredToken = Deno.env.get('SYNC_TOKEN');
+  if (requiredToken && req.headers.get('x-sync-token') !== requiredToken) {
+    return new Response(JSON.stringify({ ok: false, error: 'Invalid sync token.' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!

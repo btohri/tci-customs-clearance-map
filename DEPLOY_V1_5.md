@@ -21,6 +21,11 @@ Supabase Dashboard → **Edge Functions** → **Deploy a new function** → 選�
 > 名稱必須完全一致（cron 排程是用名稱組 URL）。
 > 不需額外設定 secrets：`SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` 是 Supabase 自動注入的。
 
+**重要：每個 Function 部署後，到該 Function 的 Details 把「Verify JWT」關閉。**
+本專案使用新版 publishable 金鑰（非 JWT 格式），不關閉會收到 `401 Invalid JWT`。
+防濫用（選用）：到 Edge Functions → Secrets 新增 `SYNC_TOKEN`（自訂字串），
+之後呼叫需帶 `x-sync-token` header，cron SQL 的 headers 也要加上同名欄位。
+
 ### 步驟 2：執行 SQL
 
 Dashboard → **SQL Editor** → 貼上 `supabase_v1_5_public_data.sql` 全部內容 → Run。
@@ -35,9 +40,14 @@ Dashboard → **SQL Editor** → 貼上 `supabase_v1_5_public_data.sql` 全部�
 ```sql
 select net.http_post(
   url := 'https://toszpweohhuuffzbxfix.supabase.co/functions/v1/sync-trade-indicators',
-  headers := jsonb_build_object('Content-Type','application/json',
-    'Authorization','Bearer sb_publishable_Y7QsQ--UlQw6j1SNBmdZAw_8x2e7hdk'),
+  headers := jsonb_build_object('Content-Type','application/json'),
   body := '{}'::jsonb, timeout_milliseconds := 120000);
+```
+
+觸發後用這句看 HTTP 狀態（404 = Function 沒部署；401 = Verify JWT 沒關）：
+
+```sql
+select id, status_code, left(content, 200) from net._http_response order by id desc limit 5;
 ```
 
 （把 URL 的 function 名稱換成另外兩個再各跑一次。）

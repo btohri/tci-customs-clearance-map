@@ -94,6 +94,12 @@ begin
   end loop;
 end $$;
 
+-- 重要：專案使用新版 publishable 金鑰（非 JWT），Edge Function 的
+-- 「Verify JWT」必須關閉（Dashboard → Edge Functions → 各 Function → Details），
+-- 否則會收到 401 Invalid JWT。關閉後 cron 不需帶 Authorization。
+-- 防濫用（選用）：在 Edge Functions Secrets 設定 SYNC_TOKEN，
+-- 並在下方 headers 加上 'x-sync-token', '你的token'。
+
 -- 港口資料：每月 1 日 02:15 UTC（台北 10:15）
 select cron.schedule(
   'tci-sync-ports',
@@ -101,10 +107,7 @@ select cron.schedule(
   $$
   select net.http_post(
     url := 'https://toszpweohhuuffzbxfix.supabase.co/functions/v1/sync-ports',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer sb_publishable_Y7QsQ--UlQw6j1SNBmdZAw_8x2e7hdk'
-    ),
+    headers := jsonb_build_object('Content-Type', 'application/json'),
     body := '{}'::jsonb,
     timeout_milliseconds := 300000
   );
@@ -118,10 +121,7 @@ select cron.schedule(
   $$
   select net.http_post(
     url := 'https://toszpweohhuuffzbxfix.supabase.co/functions/v1/sync-weather',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer sb_publishable_Y7QsQ--UlQw6j1SNBmdZAw_8x2e7hdk'
-    ),
+    headers := jsonb_build_object('Content-Type', 'application/json'),
     body := '{}'::jsonb,
     timeout_milliseconds := 120000
   );
@@ -135,10 +135,7 @@ select cron.schedule(
   $$
   select net.http_post(
     url := 'https://toszpweohhuuffzbxfix.supabase.co/functions/v1/sync-trade-indicators',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer sb_publishable_Y7QsQ--UlQw6j1SNBmdZAw_8x2e7hdk'
-    ),
+    headers := jsonb_build_object('Content-Type', 'application/json'),
     body := '{}'::jsonb,
     timeout_milliseconds := 120000
   );
