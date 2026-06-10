@@ -1105,48 +1105,8 @@ tbody tr:hover {
   }
 }
 
-/* ===== 管理後台版面（V1.6）===== */
-
-/* 左側固定導覽（僅管理頁，body.admin-console） */
-body.admin-console .nav-links {
-  position: fixed;
-  top: 64px;
-  left: 0;
-  bottom: 0;
-  z-index: 400;
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  width: 200px;
-  margin-left: 0;
-  padding: 1rem 0.7rem;
-  border-right: 1px solid var(--line);
-  background: rgba(7, 17, 29, 0.94);
-  overflow-y: auto;
-}
-
-body.admin-console .nav-links a {
-  padding: 0.6rem 0.85rem;
-  border-left: 3px solid transparent;
-  border-radius: 0 8px 8px 0;
-}
-
-body.admin-console .nav-links a[aria-current="page"] {
-  border-left-color: var(--brand-dark);
-  transform: none;
-}
-
-body.admin-console .nav-links a:hover {
-  transform: none;
-}
-
-body.admin-console .page-shell {
-  width: auto;
-  margin-left: 216px;
-  margin-right: 0;
-  padding-left: 0.5rem;
-  padding-right: 1.25rem;
-}
+/* ===== 管理後台版面（V1.6）=====
+   導覽維持置頂（側欄版型已於 V1.6.1 移除） */
 
 /* 左表單右清單 */
 .admin-split {
@@ -1206,29 +1166,5 @@ body.admin-console .page-shell {
 @media (max-width: 1180px) {
   .admin-split {
     grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 900px) {
-  body.admin-console .nav-links {
-    position: static;
-    flex-direction: row;
-    flex-wrap: wrap;
-    width: auto;
-    padding: 0;
-    border-right: none;
-    background: none;
-    overflow: visible;
-  }
-
-  body.admin-console .nav-links a {
-    border-left: none;
-    border-radius: 8px;
-  }
-
-  body.admin-console .page-shell {
-    width: min(1760px, calc(100% - 2rem));
-    margin: 0 auto;
-    padding-left: 0;
   }
 }

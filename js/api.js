@@ -249,7 +249,7 @@
   function findRouteCoordinateFromPorts(ports, country, port) {
     const normalizedCountry = normalizeCountry(country);
     const portKey = normalizeKey(port);
-    const match = (ports || []).find((item) => (
+    const candidates = (ports || []).filter((item) => (
       countryMatches(item.country, normalizedCountry) &&
       (
         normalizeKey(item.port_name) === portKey ||
@@ -258,8 +258,14 @@
         portKey.includes(normalizeKey(item.port_name))
       )
     ));
-    if (match && Number.isFinite(Number(match.latitude)) && Number.isFinite(Number(match.longitude))) {
-      return { lat: Number(match.latitude), lng: Number(match.longitude) };
+    // 只接受「真的有座標」的港口；parseFloat(null/'') 會是 NaN，
+    // 避免 Number(null)=0 把 (0,0) 當成有效座標的 bug
+    for (const match of candidates) {
+      const lat = parseFloat(match.latitude);
+      const lng = parseFloat(match.longitude);
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        return { lat, lng };
+      }
     }
     return null;
   }
