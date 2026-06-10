@@ -28,7 +28,12 @@ const COUNTRY_MAP: Record<string, string> = {
   NZ: 'New Zealand', CA: 'Canada', MX: 'Mexico', BR: 'Brazil',
   GB: 'UK', DE: 'Germany', FR: 'France', IT: 'Italy', ES: 'Spain',
   NL: 'Netherlands', RU: 'Russia', AE: 'United Arab Emirates',
-  SA: 'Saudi Arabia', TR: 'Turkey', HK: 'Hong Kong'
+  SA: 'Saudi Arabia', TR: 'Turkey', HK: 'Hong Kong',
+  PL: 'Poland', AT: 'Austria', BE: 'Belgium', CH: 'Switzerland',
+  SE: 'Sweden', NO: 'Norway', DK: 'Denmark', FI: 'Finland',
+  PT: 'Portugal', GR: 'Greece', IE: 'Ireland', HU: 'Hungary',
+  IL: 'Israel', EG: 'Egypt', ZA: 'South Africa', CL: 'Chile',
+  AR: 'Argentina'
 };
 
 // 簡易 CSV 單行解析（處理引號內逗號）

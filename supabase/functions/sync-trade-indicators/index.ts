@@ -20,7 +20,12 @@ const COUNTRY_MAP: Record<string, string> = {
   NZL: 'New Zealand', CAN: 'Canada', MEX: 'Mexico', BRA: 'Brazil',
   GBR: 'UK', DEU: 'Germany', FRA: 'France', ITA: 'Italy', ESP: 'Spain',
   NLD: 'Netherlands', RUS: 'Russia', ARE: 'United Arab Emirates',
-  SAU: 'Saudi Arabia', TUR: 'Turkey', HKG: 'Hong Kong'
+  SAU: 'Saudi Arabia', TUR: 'Turkey', HKG: 'Hong Kong',
+  POL: 'Poland', AUT: 'Austria', BEL: 'Belgium', CHE: 'Switzerland',
+  SWE: 'Sweden', NOR: 'Norway', DNK: 'Denmark', FIN: 'Finland',
+  PRT: 'Portugal', GRC: 'Greece', IRL: 'Ireland', HUN: 'Hungary',
+  ISR: 'Israel', EGY: 'Egypt', ZAF: 'South Africa', CHL: 'Chile',
+  ARG: 'Argentina'
 };
 
 const INDICATORS: Record<string, { id: string; yearField?: string }> = {

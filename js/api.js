@@ -35,9 +35,27 @@
     { value: 'Spain', zh: '西班牙', aliases: ['ES', 'ESP', 'Spain', '西班牙'] },
     { value: 'Netherlands', zh: '荷蘭', aliases: ['NL', 'NLD', 'Netherlands', 'Holland', '荷蘭', '荷兰'] },
     { value: 'Russia', zh: '俄羅斯', aliases: ['RU', 'RUS', 'Russia', 'Russian Federation', '俄羅斯', '俄罗斯'] },
-    { value: 'United Arab Emirates', zh: '阿聯酋', aliases: ['AE', 'ARE', 'UAE', 'United Arab Emirates', '阿聯酋', '阿联酋'] },
+    { value: 'United Arab Emirates', zh: '阿聯酋', aliases: ['AE', 'ARE', 'UAE', 'United Arab Emirates', '阿聯酋', '阿联酋', '阿拉伯聯合大公國', '阿拉伯联合大公国', '阿拉伯聯合酋長國'] },
     { value: 'Saudi Arabia', zh: '沙烏地阿拉伯', aliases: ['SA', 'SAU', 'Saudi Arabia', '沙烏地阿拉伯', '沙特阿拉伯'] },
-    { value: 'Turkey', zh: '土耳其', aliases: ['TR', 'TUR', 'Turkey', 'Turkiye', 'Türkiye', '土耳其'] }
+    { value: 'Turkey', zh: '土耳其', aliases: ['TR', 'TUR', 'Turkey', 'Turkiye', 'Türkiye', '土耳其'] },
+    { value: 'Poland', zh: '波蘭', aliases: ['PL', 'POL', 'Poland', '波蘭', '波兰'] },
+    { value: 'Austria', zh: '奧地利', aliases: ['AT', 'AUT', 'Austria', '奧地利', '奥地利'] },
+    { value: 'Belgium', zh: '比利時', aliases: ['BE', 'BEL', 'Belgium', '比利時', '比利时'] },
+    { value: 'Switzerland', zh: '瑞士', aliases: ['CH', 'CHE', 'Switzerland', '瑞士'] },
+    { value: 'Sweden', zh: '瑞典', aliases: ['SE', 'SWE', 'Sweden', '瑞典'] },
+    { value: 'Norway', zh: '挪威', aliases: ['NOR', 'Norway', '挪威'] },
+    { value: 'Denmark', zh: '丹麥', aliases: ['DK', 'DNK', 'Denmark', '丹麥', '丹麦'] },
+    { value: 'Finland', zh: '芬蘭', aliases: ['FI', 'FIN', 'Finland', '芬蘭', '芬兰'] },
+    { value: 'Portugal', zh: '葡萄牙', aliases: ['PT', 'PRT', 'Portugal', '葡萄牙'] },
+    { value: 'Greece', zh: '希臘', aliases: ['GR', 'GRC', 'Greece', '希臘', '希腊'] },
+    { value: 'Ireland', zh: '愛爾蘭', aliases: ['IE', 'IRL', 'Ireland', '愛爾蘭', '爱尔兰'] },
+    { value: 'Hungary', zh: '匈牙利', aliases: ['HU', 'HUN', 'Hungary', '匈牙利'] },
+    { value: 'Israel', zh: '以色列', aliases: ['IL', 'ISR', 'Israel', '以色列'] },
+    { value: 'Egypt', zh: '埃及', aliases: ['EG', 'EGY', 'Egypt', '埃及'] },
+    { value: 'South Africa', zh: '南非', aliases: ['ZA', 'ZAF', 'South Africa', '南非'] },
+    { value: 'Chile', zh: '智利', aliases: ['CL', 'CHL', 'Chile', '智利'] },
+    { value: 'Argentina', zh: '阿根廷', aliases: ['AR', 'ARG', 'Argentina', '阿根廷'] },
+    { value: 'Hong Kong', zh: '香港', aliases: ['HK', 'HKG', 'Hong Kong', 'Hong Kong S.A.R.', '香港'] }
   ];
   const countryAliasMap = countryAliases.reduce((map, country) => {
     [country.value, country.zh, ...country.aliases].forEach((alias) => {
