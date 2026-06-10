@@ -49,9 +49,10 @@
     return `route-${risk || 'none'}`;
   }
 
+  // 航線線色：正常航線採國際海圖常見的藍色，僅警示時用琥珀/紅
   function routeColor(risk) {
     return {
-      green: '#5AF0BD',
+      green: '#4DA3FF',
       yellow: '#F2B84B',
       red: '#E94F5C'
     }[risk] || '#8FA4B8';
