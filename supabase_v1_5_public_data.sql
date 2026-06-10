@@ -12,10 +12,13 @@
 
 create extension if not exists "uuid-ossp";
 
--- 1. ports.unlocode 唯一索引（NULL 不受限，手動建立的港口不填 unlocode 也沒問題）
+-- 1. ports.unlocode 唯一索引
+--    注意：不可用部分索引（where 條件），否則 Supabase upsert 的
+--    on conflict 對應不到索引。PostgreSQL 唯一索引本來就允許多筆 NULL，
+--    手動建立、不填 unlocode 的港口不受影響。
+drop index if exists ports_unlocode_unique;
 create unique index if not exists ports_unlocode_unique
-  on ports (unlocode)
-  where unlocode is not null;
+  on ports (unlocode);
 
 -- 2. World Bank LPI 指標（1=低 ~ 5=高）
 create table if not exists country_trade_indicators (
