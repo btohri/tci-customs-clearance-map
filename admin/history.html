@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>歷史紀錄 | TCI 通關地圖</title>
-  <link rel="stylesheet" href="../css/style.css?v=20260609-broker">
+  <link rel="stylesheet" href="../css/style.css?v=20260610-history-routes">
 </head>
 <body data-page="history">
   <header class="topbar">
@@ -34,45 +34,168 @@
       <span class="brand-chip">Record Archive</span>
     </section>
 
-    <section class="table-card">
-      <div class="table-toolbar">
-        <h2>通關歷史紀錄</h2>
-        <div class="filter-row">
+    <datalist id="countryList"></datalist>
+    <datalist id="logisticsPortList"></datalist>
+
+    <details id="historyRecordsPanel" class="collapsible-card table-card" open>
+      <summary>
+        <span>通關歷史紀錄</span>
+        <small>查看、篩選、編輯既有通關資料</small>
+      </summary>
+      <div class="collapsible-content">
+        <div class="table-toolbar">
+          <div class="filter-row">
+            <label>
+              依國家篩選
+              <select id="adminCountryFilter">
+                <option value="">全部國家</option>
+              </select>
+            </label>
+            <label>
+              依劑型篩選
+              <select id="adminDosageFilter">
+                <option value="">全部劑型</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <p id="historyMessage" class="message" aria-live="polite"></p>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>國家</th>
+                <th>口岸</th>
+                <th>劑型</th>
+                <th>結果</th>
+                <th>天數</th>
+                <th>風險</th>
+                <th>文件</th>
+                <th>更新日</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="recordsTableBody"></tbody>
+          </table>
+        </div>
+        <div id="historyPagination"></div>
+      </div>
+    </details>
+
+    <details id="routeManagementPanel" class="collapsible-card table-card">
+      <summary>
+        <span>航線情報管理</span>
+        <small>維護航線風險、天數與路徑資訊</small>
+      </summary>
+      <div class="collapsible-content">
+        <form id="routeForm" class="admin-form">
+          <input id="routeId" type="hidden">
+          <h2>航線風險情報</h2>
+          <p class="hint">日常只需填國家、港口、風險與天數；座標可由系統依常見港口或國家位置推定。</p>
+          <div class="form-grid">
+            <label>
+              航線名稱
+              <input id="routeNameInput" placeholder="Shanghai → Los Angeles">
+            </label>
+            <label>
+              運輸方式
+              <select id="transportModeInput" required>
+                <option value="ocean">海運</option>
+                <option value="air">空運</option>
+                <option value="multimodal">複合運輸</option>
+              </select>
+            </label>
+            <label>
+              起運國家
+              <input id="originCountryInput" list="countryList" required>
+            </label>
+            <label>
+              起運港
+              <input id="originPortInput" list="logisticsPortList" required>
+            </label>
+            <label>
+              目的國家
+              <input id="destinationCountryInput" list="countryList" required>
+            </label>
+            <label>
+              目的港
+              <input id="destinationPortInput" list="logisticsPortList" required>
+            </label>
+            <label>
+              預估天數
+              <input id="routeDaysInput" type="number" min="0" required>
+            </label>
+            <label>
+              距離 km
+              <input id="routeDistanceInput" type="number" min="0">
+            </label>
+            <label>
+              航線風險
+              <select id="routeRiskInput" required>
+                <option value="green">Green</option>
+                <option value="yellow">Yellow</option>
+                <option value="red">Red</option>
+              </select>
+            </label>
+            <label>
+              關鍵通道
+              <input id="chokepointsInput" placeholder="Malacca, Suez">
+            </label>
+          </div>
+          <details class="advanced-fields">
+            <summary>進階座標設定</summary>
+            <div class="form-grid">
+              <label>
+                起點緯度
+                <input id="originLatInput" type="number" step="0.000001">
+              </label>
+              <label>
+                起點經度
+                <input id="originLngInput" type="number" step="0.000001">
+              </label>
+              <label>
+                終點緯度
+                <input id="destinationLatInput" type="number" step="0.000001">
+              </label>
+              <label>
+                終點經度
+                <input id="destinationLngInput" type="number" step="0.000001">
+              </label>
+            </div>
+            <label>
+              路徑座標
+              <textarea id="routePathInput" placeholder="31.2304,121.4737; 1.3521,103.8198; 33.7405,-118.2775"></textarea>
+            </label>
+          </details>
           <label>
-            依國家篩選
-            <select id="adminCountryFilter">
-              <option value="">全部國家</option>
-            </select>
+            航線備註
+            <textarea id="routeNotesInput"></textarea>
           </label>
-          <label>
-            依劑型篩選
-            <select id="adminDosageFilter">
-              <option value="">全部劑型</option>
-            </select>
-          </label>
+          <div class="form-actions">
+            <button id="routeSubmitButton" class="button primary" type="submit">新增航線</button>
+            <button id="routeCancelEditButton" class="button ghost" type="button" hidden>取消編輯</button>
+          </div>
+          <p id="routeMessage" class="message" aria-live="polite"></p>
+        </form>
+
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>航線</th>
+                <th>方式</th>
+                <th>起點</th>
+                <th>終點</th>
+                <th>天數</th>
+                <th>風險</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="routesTableBody"></tbody>
+          </table>
         </div>
       </div>
-      <p id="historyMessage" class="message" aria-live="polite"></p>
-      <div class="table-scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>國家</th>
-              <th>口岸</th>
-              <th>劑型</th>
-              <th>結果</th>
-              <th>天數</th>
-              <th>風險</th>
-              <th>文件</th>
-              <th>更新日</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody id="recordsTableBody"></tbody>
-        </table>
-      </div>
-      <div id="historyPagination"></div>
-    </section>
+    </details>
   </main>
 
   <div id="passwordDialog" class="modal-backdrop" hidden>
@@ -97,9 +220,9 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../js/api.js?v=20260609-broker"></script>
-  <script src="../js/auth.js?v=20260609-broker"></script>
-  <script src="../js/search.js?v=20260609-broker"></script>
-  <script src="js/history.js?v=20260609-broker"></script>
+  <script src="../js/api.js?v=20260610-history-routes"></script>
+  <script src="../js/auth.js?v=20260610-history-routes"></script>
+  <script src="../js/search.js?v=20260610-history-routes"></script>
+  <script src="js/history.js?v=20260610-history-routes"></script>
 </body>
 </html>

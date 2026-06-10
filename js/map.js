@@ -200,7 +200,7 @@
     }
   }
 
-  function onPortSelect(country, port) {
+  async function onPortSelect(country, port) {
     document.getElementById('map-sidebar').innerHTML = `
       <div class="sidebar-title">
         <h2>${window.TCISearch.escapeHtml(window.TCIApi.displayCountry(country))} > ${window.TCISearch.escapeHtml(port)}</h2>
@@ -213,7 +213,13 @@
         <button class="button primary" type="submit">查詢</button>
       </form>
     `;
-    window.TCISearch.fillDosageForms(document.getElementById('mapDosageForm'));
+    const dosageSelect = document.getElementById('mapDosageForm');
+    try {
+      await window.TCISearch.fillAvailableDosageForms(dosageSelect, country, port);
+    } catch (error) {
+      dosageSelect.disabled = true;
+      dosageSelect.innerHTML = '<option value="">劑型載入失敗</option>';
+    }
     document.getElementById('mapSearchForm').addEventListener('submit', async (event) => {
       event.preventDefault();
       await onSearch(country, port, document.getElementById('mapDosageForm').value);
@@ -318,7 +324,7 @@
         fillOpacity: 0.85,
         weight: 2
       });
-      marker.bindTooltip(`Broker: ${list.length} 家 (${window.TCISearch.escapeHtml(window.TCIApi.displayCountry(country))})`);
+      marker.bindTooltip(`服務商: ${list.length} 家 (${window.TCISearch.escapeHtml(window.TCIApi.displayCountry(country))})`);
       marker.on('click', () => showBrokerDetail(country, list));
       marker.addTo(brokerLayerGroup);
     });
@@ -328,7 +334,7 @@
     document.getElementById('map-sidebar').innerHTML = `
       <div class="sidebar-title">
         <h2>${window.TCISearch.escapeHtml(window.TCIApi.displayCountry(country))}</h2>
-        <span class="risk-badge risk-none">Broker 名錄</span>
+        <span class="risk-badge risk-none">服務商名錄</span>
       </div>
       <div class="route-list">
         ${list.map((broker) => `

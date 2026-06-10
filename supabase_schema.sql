@@ -36,10 +36,14 @@ create table if not exists broker_directory (
   id uuid primary key default uuid_generate_v4(),
   country text not null,
   port text,
+  service_type text check (service_type in ('broker', 'forwarder', 'ocean', 'air', 'other')) not null default 'broker',
   broker_name text not null,
   contact_info text,
   remarks text
 );
+
+alter table broker_directory
+  add column if not exists service_type text check (service_type in ('broker', 'forwarder', 'ocean', 'air', 'other')) not null default 'broker';
 
 create table if not exists ports (
   id uuid primary key default uuid_generate_v4(),

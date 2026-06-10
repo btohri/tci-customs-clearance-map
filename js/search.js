@@ -82,7 +82,7 @@
     }
     const brokerText = brokers.length
       ? brokers.map((broker) => broker.broker_name).join('、')
-      : [...new Set(records.map((record) => record.broker).filter(Boolean))].join('、') || '尚無建議 Broker';
+      : [...new Set(records.map((record) => record.broker).filter(Boolean))].join('、') || '尚無建議服務商';
     const notes = [...new Set(records.map((record) => record.issue_note).filter(Boolean))];
     const forwarders = [...new Set(records.map((record) => record.forwarder).filter(Boolean))];
 
@@ -101,7 +101,7 @@
       </div>
       <h3>所需文件</h3>
       <div class="tag-list">${documents.map((doc) => `<span class="tag">${escapeHtml(doc)}</span>`).join('') || '<span class="tag">尚無文件資料</span>'}</div>
-      <h3>建議 Broker</h3>
+      <h3>建議服務商</h3>
       <p>${escapeHtml(brokerText)}</p>
       ${forwarders.length ? `<h3>貨代 Forwarder</h3><p>${escapeHtml(forwarders.join('、'))}</p>` : ''}
       <h3>異常紀錄</h3>
@@ -140,8 +140,30 @@
 
   function fillDosageForms(select) {
     if (!select) return;
+    select.disabled = false;
     select.innerHTML = '<option value="">請選擇劑型</option>' + window.TCIApi.dosageForms
       .map((form) => `<option value="${escapeHtml(form.value)}">${escapeHtml(window.TCIApi.displayDosageForm(form.value))}</option>`)
+      .join('');
+  }
+
+  async function fillAvailableDosageForms(select, country, port) {
+    if (!select) return;
+    select.value = '';
+    if (!country || !port) {
+      select.disabled = true;
+      select.innerHTML = '<option value="">請先選擇口岸</option>';
+      return;
+    }
+    select.disabled = true;
+    select.innerHTML = '<option value="">載入劑型中...</option>';
+    const forms = await window.TCIApi.getAvailableDosageForms({ country, port });
+    if (!forms.length) {
+      select.innerHTML = '<option value="">此口岸尚無劑型資料</option>';
+      return;
+    }
+    select.disabled = false;
+    select.innerHTML = '<option value="">請選擇劑型</option>' + forms
+      .map((form) => `<option value="${escapeHtml(form)}">${escapeHtml(window.TCIApi.displayDosageForm(form))}</option>`)
       .join('');
   }
 
@@ -192,11 +214,20 @@
   async function initSearchPage() {
     await window.TCIAuth.requireAuth();
     bindTabs();
-    fillDosageForms(document.getElementById('dosageFormSelect'));
+    await fillAvailableDosageForms(document.getElementById('dosageFormSelect'));
     await fillCountries();
 
-    document.getElementById('countrySelect')?.addEventListener('change', (event) => {
-      fillPorts(event.target.value);
+    document.getElementById('countrySelect')?.addEventListener('change', async (event) => {
+      await fillPorts(event.target.value);
+      await fillAvailableDosageForms(document.getElementById('dosageFormSelect'), event.target.value, '');
+    });
+
+    document.getElementById('portSelect')?.addEventListener('change', async (event) => {
+      await fillAvailableDosageForms(
+        document.getElementById('dosageFormSelect'),
+        document.getElementById('countrySelect').value,
+        event.target.value
+      );
     });
 
     document.getElementById('searchForm')?.addEventListener('submit', async (event) => {
@@ -222,7 +253,8 @@
     riskText,
     riskIcon,
     renderSearchResult,
-    fillDosageForms
+    fillDosageForms,
+    fillAvailableDosageForms
   };
 
   document.addEventListener('DOMContentLoaded', () => {

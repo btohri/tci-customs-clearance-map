@@ -46,21 +46,18 @@
     return map;
   }, new Map());
   const dosageForms = [
-    { value: 'Capsule', zh: '膠囊', en: 'Capsule', aliases: ['膠囊', '胶囊'] },
-    { value: 'Tablet', zh: '錠劑', en: 'Tablet', aliases: ['錠劑', '锭剂', '片劑', '片剂'] },
-    { value: 'Powder', zh: '粉劑', en: 'Powder', aliases: ['粉劑', '粉剂', '粉末'] },
-    { value: 'Gummy', zh: '軟糖', en: 'Gummy', aliases: ['軟糖', '软糖'] },
-    { value: 'Liquid', zh: '液體', en: 'Liquid', aliases: ['液體', '液体'] },
-    { value: 'Softgel', zh: '軟膠囊', en: 'Softgel', aliases: ['軟膠囊', '软胶囊', '軟膠', '软胶'] },
-    { value: 'Mask', zh: '面膜', en: 'Mask', aliases: ['面膜', 'Facial Mask', 'Sheet Mask'] },
-    { value: 'Others', zh: '其他', en: 'Others', aliases: ['其他', 'Other'] }
+    { value: 'FoodPowderPack', zh: '食品粉包', en: '', aliases: ['食品粉包', '粉包', 'Powder Pack', 'Powder', '粉劑', '粉剂', '粉末'] },
+    { value: 'FoodTablet', zh: '食品錠劑', en: '', aliases: ['食品錠劑', '食品锭剂', '錠劑', '锭剂', '片劑', '片剂', 'Tablet', 'Capsule', 'Softgel', 'Gummy', '膠囊', '胶囊', '軟膠囊', '软胶囊', '軟糖', '软糖'] },
+    { value: 'Mask', zh: '面膜', en: '', aliases: ['面膜', 'Facial Mask', 'Sheet Mask'] },
+    { value: 'Liquid', zh: '液態', en: '', aliases: ['液態', '液态', '液體', '液体', 'Liquid'] }
   ];
   const dosageAliasMap = dosageForms.reduce((map, form) => {
-    [form.value, form.en, form.zh, ...form.aliases].forEach((alias) => {
+    [form.value, form.en, form.zh, ...form.aliases].filter(Boolean).forEach((alias) => {
       map.set(normalizeKey(alias), form);
     });
     return map;
   }, new Map());
+  const dosageValueSet = new Set(dosageForms.map((form) => form.value));
   const riskRank = { green: 1, yellow: 2, red: 3 };
   const portCoordinates = [
     { country: 'Taiwan', aliases: ['Keelung', '基隆'], lat: 25.1504, lng: 121.7392 },
@@ -144,7 +141,7 @@
 
   function displayDosageForm(value) {
     const form = findAlias(dosageAliasMap, value);
-    return form ? `${form.zh} ${form.en}` : String(value || '').trim();
+    return form ? [form.zh, form.en].filter(Boolean).join(' ') : String(value || '').trim();
   }
 
   function dosageMatches(recordForm, queryForm) {
@@ -360,21 +357,6 @@
 
   async function getPorts(country) {
     const normalized = normalizeCountry(country);
-    // Try ports master table first (targeted query, avoids full table scan)
-    try {
-      const { data: masterPorts, error: masterError } = await getClient()
-        .from('ports')
-        .select('port_name, country')
-        .order('port_name');
-      if (!masterError && masterPorts?.length) {
-        const filtered = masterPorts
-          .filter((row) => countryMatches(row.country, normalized))
-          .map((row) => row.port_name)
-          .filter(Boolean);
-        if (filtered.length) return [...new Set(filtered)];
-      }
-    } catch {} // fall through to customs_records fallback
-    // Fall back: query customs_records by normalized country only
     const { data, error } = await getClient()
       .from('customs_records')
       .select('port')
@@ -382,6 +364,21 @@
       .order('port');
     if (error) throw error;
     return [...new Set((data || []).map((row) => row.port).filter(Boolean))];
+  }
+
+  async function getAvailableDosageForms({ country, port }) {
+    if (!country || !port) return [];
+    const { data, error } = await getClient()
+      .from('customs_records')
+      .select('country, dosage_form')
+      .eq('port', port)
+      .order('dosage_form');
+    if (error) throw error;
+    const forms = (data || [])
+      .filter((record) => countryMatches(record.country, country))
+      .map((record) => normalizeDosageForm(record.dosage_form))
+      .filter((form) => dosageValueSet.has(form));
+    return [...new Set(forms)].sort((a, b) => displayDosageForm(a).localeCompare(displayDosageForm(b), 'zh-Hant'));
   }
 
   async function searchCustoms({ country, port, dosageForm }) {
@@ -621,10 +618,21 @@
     return {
       country: normalizeCountry(data.country),
       port: data.port?.trim() || null,
+      service_type: data.service_type || data.serviceType || 'broker',
       broker_name: data.broker_name?.trim(),
       contact_info: data.contact_info?.trim() || null,
       remarks: data.remarks?.trim() || null
     };
+  }
+
+  function brokerPayloadWithoutServiceType(payload) {
+    const { service_type, ...legacyPayload } = payload;
+    return legacyPayload;
+  }
+
+  function canRetryBrokerWithoutServiceType(error) {
+    const message = String(error?.message || '').toLowerCase();
+    return message.includes('service_type') || message.includes('schema cache');
   }
 
   async function getAllBrokers() {
@@ -638,22 +646,43 @@
   }
 
   async function addBroker(data) {
+    const payload = normalizeBroker(data);
     const { data: inserted, error } = await getClient()
       .from('broker_directory')
-      .insert(normalizeBroker(data))
+      .insert(payload)
       .select()
       .single();
+    if (error && canRetryBrokerWithoutServiceType(error)) {
+      const { data: legacyInserted, error: legacyError } = await getClient()
+        .from('broker_directory')
+        .insert(brokerPayloadWithoutServiceType(payload))
+        .select()
+        .single();
+      if (legacyError) throw legacyError;
+      return legacyInserted;
+    }
     if (error) throw error;
     return inserted;
   }
 
   async function updateBroker(id, data) {
+    const payload = normalizeBroker(data);
     const { data: updated, error } = await getClient()
       .from('broker_directory')
-      .update(normalizeBroker(data))
+      .update(payload)
       .eq('id', id)
       .select()
       .single();
+    if (error && canRetryBrokerWithoutServiceType(error)) {
+      const { data: legacyUpdated, error: legacyError } = await getClient()
+        .from('broker_directory')
+        .update(brokerPayloadWithoutServiceType(payload))
+        .eq('id', id)
+        .select()
+        .single();
+      if (legacyError) throw legacyError;
+      return legacyUpdated;
+    }
     if (error) throw error;
     return updated;
   }
@@ -799,6 +828,7 @@
     getUserRole,
     getCountries,
     getPorts,
+    getAvailableDosageForms,
     searchCustoms,
     getBrokers,
     addRecord,

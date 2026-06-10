@@ -778,6 +778,10 @@ tbody tr:hover {
   gap: 1.25rem;
 }
 
+.admin-entry-grid.single-column {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .admin-form {
   width: 100%;
   padding: 1rem;
@@ -857,6 +861,56 @@ tbody tr:hover {
   padding: 1rem;
   position: relative;
   overflow: hidden;
+}
+
+.collapsible-card {
+  padding: 0;
+}
+
+.collapsible-card > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  cursor: pointer;
+  color: var(--ink);
+  font-weight: 900;
+  list-style: none;
+}
+
+.collapsible-card > summary::-webkit-details-marker {
+  display: none;
+}
+
+.collapsible-card > summary::after {
+  content: '+';
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--brand-dark);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.collapsible-card[open] > summary::after {
+  content: '-';
+}
+
+.collapsible-card > summary span {
+  font-size: 1.15rem;
+}
+
+.collapsible-card > summary small {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.collapsible-content {
+  padding: 0 1rem 1rem;
 }
 
 .table-toolbar {

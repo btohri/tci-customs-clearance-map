@@ -4,7 +4,6 @@
   let records = [];
   let routes = [];
   let ports = [];
-  let carriers = [];
   let quotes = [];
   let brokerDirectory = [];
 
@@ -23,6 +22,14 @@
     air: '空運',
     multimodal: '複合運輸',
     forwarder: '貨代'
+  };
+
+  const serviceTypeLabels = {
+    broker: '報關行 / Broker',
+    forwarder: '貨代',
+    ocean: '船公司',
+    air: '航空公司',
+    other: '其他'
   };
 
   function field(id) {
@@ -125,19 +132,10 @@
     };
   }
 
-  function getCarrierFormData() {
-    return {
-      carrier_name: field('carrierNameInput').value.trim(),
-      carrier_type: field('carrierTypeInput').value,
-      website: field('carrierWebsiteInput').value.trim(),
-      remarks: field('carrierRemarksInput').value.trim()
-    };
-  }
-
   function getQuoteFormData() {
     return {
       route_id: field('quoteRouteInput').value || null,
-      carrier_id: field('quoteCarrierInput').value || null,
+      carrier_id: null,
       origin_port: field('quoteOriginPortInput').value.trim(),
       destination_port: field('quoteDestinationPortInput').value.trim(),
       transport_mode: field('quoteTransportModeInput').value,
@@ -205,25 +203,9 @@
     setPortFormData({});
   }
 
-  function setCarrierFormData(carrier) {
-    field('carrierId').value = carrier.id || '';
-    field('carrierNameInput').value = carrier.carrier_name || '';
-    field('carrierTypeInput').value = carrier.carrier_type || 'ocean';
-    field('carrierWebsiteInput').value = carrier.website || '';
-    field('carrierRemarksInput').value = carrier.remarks || '';
-    field('carrierSubmitButton').textContent = carrier.id ? '儲存承運商' : '新增承運商';
-    field('carrierCancelEditButton').hidden = !carrier.id;
-  }
-
-  function resetCarrierForm() {
-    field('carrierForm').reset();
-    setCarrierFormData({});
-  }
-
   function setQuoteFormData(quote) {
     field('quoteId').value = quote.id || '';
     field('quoteRouteInput').value = quote.route_id || '';
-    field('quoteCarrierInput').value = quote.carrier_id || '';
     field('quoteOriginPortInput').value = quote.origin_port || '';
     field('quoteDestinationPortInput').value = quote.destination_port || '';
     field('quoteTransportModeInput').value = quote.transport_mode || 'ocean';
@@ -268,12 +250,6 @@
   function validatePort(data) {
     if (!data.port_name || !data.country) {
       throw new Error('請填寫港口名稱與國家。');
-    }
-  }
-
-  function validateCarrier(data) {
-    if (!data.carrier_name || !data.carrier_type) {
-      throw new Error('請填寫承運商與類型。');
     }
   }
 
@@ -373,14 +349,6 @@
       <option value="${route.id}">${window.TCISearch.escapeHtml(route.route_name)}</option>
     `).join('');
     field('quoteRouteInput').value = routes.some((route) => route.id === selected) ? selected : '';
-  }
-
-  function renderCarrierSelect() {
-    const selected = field('quoteCarrierInput')?.value || '';
-    field('quoteCarrierInput').innerHTML = '<option value="">未指定</option>' + carriers.map((carrier) => `
-      <option value="${carrier.id}">${window.TCISearch.escapeHtml(carrier.carrier_name)}</option>
-    `).join('');
-    field('quoteCarrierInput').value = carriers.some((carrier) => carrier.id === selected) ? selected : '';
   }
 
   function renderRoutesTable() {
@@ -484,61 +452,10 @@
     }
   }
 
-  function renderCarriersTable() {
-    field('carriersTableBody').innerHTML = carriers.map((carrier) => `
-      <tr>
-        <td>${window.TCISearch.escapeHtml(carrier.carrier_name)}</td>
-        <td>${window.TCISearch.escapeHtml(transportLabels[carrier.carrier_type] || carrier.carrier_type)}</td>
-        <td>
-          <div class="action-row">
-            <button class="button ghost carrier-edit-button" type="button" data-id="${carrier.id}">編輯</button>
-            <button class="button danger carrier-delete-button" type="button" data-id="${carrier.id}">刪除</button>
-          </div>
-        </td>
-      </tr>
-    `).join('');
-
-    document.querySelectorAll('.carrier-edit-button').forEach((button) => {
-      button.addEventListener('click', () => {
-        const carrier = carriers.find((item) => item.id === button.dataset.id);
-        if (carrier) setCarrierFormData(carrier);
-      });
-    });
-
-    document.querySelectorAll('.carrier-delete-button').forEach((button) => {
-      button.addEventListener('click', async () => {
-        if (!confirm('確定要刪除此筆承運商資料？')) return;
-        try {
-          await window.TCIApi.deleteCarrier(button.dataset.id);
-          scopedMessage('carrierMessage', '承運商已刪除。', 'success');
-          await loadCarriers();
-        } catch (error) {
-          scopedMessage('carrierMessage', error.message, 'error');
-        }
-      });
-    });
-  }
-
-  async function loadCarriers() {
-    try {
-      carriers = await window.TCIApi.getAllCarriers();
-      renderCarriersTable();
-      renderCarrierSelect();
-    } catch (error) {
-      carriers = [];
-      renderCarriersTable();
-      scopedMessage('carrierMessage', `承運商資料表尚未啟用：${error.message}`, 'error');
-    }
-  }
-
   function quoteRouteText(quote) {
     const route = routes.find((item) => item.id === quote.route_id);
     if (route) return route.route_name;
     return `${quote.origin_port} → ${quote.destination_port}`;
-  }
-
-  function quoteCarrierText(quote) {
-    return carriers.find((item) => item.id === quote.carrier_id)?.carrier_name || '未指定';
   }
 
   function renderQuotesTable() {
@@ -547,7 +464,6 @@
         <td>${window.TCISearch.escapeHtml(quote.quote_date || '')}</td>
         <td>${window.TCISearch.escapeHtml(quoteRouteText(quote))}</td>
         <td>${window.TCISearch.escapeHtml(transportLabels[quote.transport_mode] || quote.transport_mode)}</td>
-        <td>${window.TCISearch.escapeHtml(quoteCarrierText(quote))}</td>
         <td>${window.TCISearch.escapeHtml(quote.container_type || quote.chargeable_weight_kg || '--')}</td>
         <td>${window.TCISearch.escapeHtml(`${quote.currency || ''} ${quote.amount || ''}`)}</td>
         <td>${window.TCISearch.escapeHtml(quote.source_name || '')}</td>
@@ -672,35 +588,10 @@
     field('portCancelEditButton').addEventListener('click', resetPortForm);
   }
 
-  function bindCarrierForm() {
-    field('carrierForm').addEventListener('submit', async (event) => {
-      event.preventDefault();
-      try {
-        const data = getCarrierFormData();
-        validateCarrier(data);
-        const id = field('carrierId').value;
-        field('carrierSubmitButton').disabled = true;
-        if (id) {
-          await window.TCIApi.updateCarrier(id, data);
-          scopedMessage('carrierMessage', '承運商已更新。', 'success');
-        } else {
-          await window.TCIApi.addCarrier(data);
-          scopedMessage('carrierMessage', '承運商已新增。', 'success');
-        }
-        resetCarrierForm();
-        await loadCarriers();
-      } catch (error) {
-        scopedMessage('carrierMessage', error.message, 'error');
-      } finally {
-        field('carrierSubmitButton').disabled = false;
-      }
-    });
-    field('carrierCancelEditButton').addEventListener('click', resetCarrierForm);
-  }
-
   function getBrokerFormData() {
     return {
       broker_name: field('brokerNameInput').value.trim(),
+      service_type: field('brokerTypeInput')?.value || 'broker',
       country: window.TCIApi.normalizeCountry(field('brokerCountryInput').value),
       port: field('brokerPortInput').value.trim() || null,
       contact_info: field('brokerContactInput').value.trim() || null,
@@ -711,11 +602,12 @@
   function setBrokerFormData(broker) {
     field('brokerId').value = broker.id || '';
     field('brokerNameInput').value = broker.broker_name || '';
+    field('brokerTypeInput').value = broker.service_type || 'broker';
     field('brokerCountryInput').value = broker.country ? window.TCIApi.displayCountry(broker.country) : '';
     field('brokerPortInput').value = broker.port || '';
     field('brokerContactInput').value = broker.contact_info || '';
     field('brokerRemarksInput').value = broker.remarks || '';
-    field('brokerSubmitButton').textContent = broker.id ? '儲存 Broker' : '新增 Broker';
+    field('brokerSubmitButton').textContent = broker.id ? '儲存服務商' : '新增服務商';
     field('brokerCancelEditButton').hidden = !broker.id;
   }
 
@@ -725,9 +617,19 @@
   }
 
   function validateBroker(data) {
-    if (!data.broker_name || !data.country) {
-      throw new Error('請填寫 Broker 名稱與國家。');
+    if (!data.broker_name || !data.service_type || !data.country) {
+      throw new Error('請填寫服務商名稱、類型與國家。');
     }
+  }
+
+  function renderServiceProviderList() {
+    const list = field('serviceProviderList');
+    if (!list) return;
+    list.innerHTML = brokerDirectory.map((broker) => `
+      <option value="${window.TCISearch.escapeHtml(broker.broker_name)}">
+        ${window.TCISearch.escapeHtml(serviceTypeLabels[broker.service_type] || serviceTypeLabels.broker)}
+      </option>
+    `).join('');
   }
 
   function renderBrokersTable() {
@@ -736,6 +638,7 @@
     body.innerHTML = brokerDirectory.map((broker) => `
       <tr>
         <td>${window.TCISearch.escapeHtml(broker.broker_name)}</td>
+        <td>${window.TCISearch.escapeHtml(serviceTypeLabels[broker.service_type] || serviceTypeLabels.broker)}</td>
         <td>${window.TCISearch.escapeHtml(window.TCIApi.displayCountry(broker.country))}</td>
         <td>${window.TCISearch.escapeHtml(broker.port || '')}</td>
         <td>${window.TCISearch.escapeHtml(broker.contact_info || '')}</td>
@@ -758,10 +661,10 @@
 
     document.querySelectorAll('.broker-delete-button').forEach((button) => {
       button.addEventListener('click', async () => {
-        if (!confirm('確定要刪除此筆 Broker 資料？')) return;
+        if (!confirm('確定要刪除此筆服務商資料？')) return;
         try {
           await window.TCIApi.deleteBroker(button.dataset.id);
-          scopedMessage('brokerMessage', 'Broker 已刪除。', 'success');
+          scopedMessage('brokerMessage', '服務商已刪除。', 'success');
           await loadBrokerDirectory();
         } catch (error) {
           scopedMessage('brokerMessage', error.message, 'error');
@@ -774,10 +677,12 @@
     try {
       brokerDirectory = await window.TCIApi.getAllBrokers();
       renderBrokersTable();
+      renderServiceProviderList();
     } catch (error) {
       brokerDirectory = [];
       renderBrokersTable();
-      scopedMessage('brokerMessage', `Broker 資料表尚未啟用：${error.message}`, 'error');
+      renderServiceProviderList();
+      scopedMessage('brokerMessage', `服務商資料表尚未啟用：${error.message}`, 'error');
     }
   }
 
@@ -791,10 +696,10 @@
         field('brokerSubmitButton').disabled = true;
         if (id) {
           await window.TCIApi.updateBroker(id, data);
-          scopedMessage('brokerMessage', 'Broker 已更新。', 'success');
+          scopedMessage('brokerMessage', '服務商已更新。', 'success');
         } else {
           await window.TCIApi.addBroker(data);
-          scopedMessage('brokerMessage', 'Broker 已新增。', 'success');
+          scopedMessage('brokerMessage', '服務商已新增。', 'success');
         }
         resetBrokerForm();
         await loadBrokerDirectory();
@@ -848,13 +753,11 @@
     bindForm();
     bindRouteForm();
     bindPortForm();
-    bindCarrierForm();
     bindBrokerForm();
     bindQuoteForm();
     setQuoteFormData({});
     await loadRecords();
     await loadPorts();
-    await loadCarriers();
     await loadBrokerDirectory();
     await loadRoutes();
     await loadQuotes();

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>TCI 通關地圖</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="css/style.css?v=20260609-broker">
+  <link rel="stylesheet" href="css/style.css?v=20260610-history-routes">
 </head>
 <body data-page="search">
   <header class="topbar">
@@ -62,7 +62,7 @@
         <span class="console-label">LAYERS</span>
         <button class="layer-pill active" type="button">通關風險</button>
         <button id="routeLayerToggle" class="layer-pill active" type="button" aria-pressed="true">航線情報</button>
-        <button id="brokerLayerToggle" class="layer-pill" type="button" aria-pressed="false">Broker 情報</button>
+        <button id="brokerLayerToggle" class="layer-pill" type="button" aria-pressed="false">服務商情報</button>
         <div class="risk-legend" aria-label="風險圖例">
           <span><i class="legend-dot green"></i>Green</span>
           <span><i class="legend-dot yellow"></i>Yellow</span>
@@ -106,7 +106,7 @@
       <section id="resultPanel" class="result-card" aria-live="polite">
         <div class="empty-state">
           <strong>請選擇條件後查詢</strong>
-          <span>結果會顯示風險燈號、文件、Broker 與歷史紀錄。</span>
+          <span>結果會顯示風險燈號、文件、服務商與歷史紀錄。</span>
         </div>
       </section>
     </section>
@@ -135,9 +135,9 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="js/api.js?v=20260609-broker"></script>
-  <script src="js/auth.js?v=20260609-broker"></script>
-  <script src="js/search.js?v=20260609-broker"></script>
-  <script src="js/map.js?v=20260609-broker"></script>
+  <script src="js/api.js?v=20260610-history-routes"></script>
+  <script src="js/auth.js?v=20260610-history-routes"></script>
+  <script src="js/search.js?v=20260610-history-routes"></script>
+  <script src="js/map.js?v=20260610-history-routes"></script>
 </body>
 </html>

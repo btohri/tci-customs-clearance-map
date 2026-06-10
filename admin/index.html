@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>後台 | TCI 通關地圖</title>
-  <link rel="stylesheet" href="../css/style.css?v=20260609-broker">
+  <link rel="stylesheet" href="../css/style.css?v=20260610-history-routes">
 </head>
 <body data-page="admin">
   <header class="topbar">
@@ -34,7 +34,7 @@
       <span class="brand-chip">TCI Admin Console</span>
     </section>
 
-    <section class="admin-entry-grid">
+    <section class="admin-entry-grid single-column">
       <form id="recordForm" class="admin-form">
         <input id="recordId" type="hidden">
         <h2>通關紀錄</h2>
@@ -102,119 +102,6 @@
         </div>
         <p id="adminMessage" class="message" aria-live="polite"></p>
       </form>
-
-      <form id="routeForm" class="admin-form">
-        <input id="routeId" type="hidden">
-        <h2>航線風險情報</h2>
-        <p class="hint">日常只需填國家、港口、風險與天數；座標可由系統依常見港口或國家位置推定。</p>
-        <div class="form-grid">
-          <label>
-            航線名稱
-            <input id="routeNameInput" placeholder="Shanghai → Los Angeles">
-          </label>
-          <label>
-            運輸方式
-            <select id="transportModeInput" required>
-              <option value="ocean">海運</option>
-              <option value="air">空運</option>
-              <option value="multimodal">複合運輸</option>
-            </select>
-          </label>
-          <label>
-            起運國家
-            <input id="originCountryInput" list="countryList" required>
-          </label>
-          <label>
-            起運港
-            <input id="originPortInput" list="logisticsPortList" required>
-          </label>
-          <label>
-            目的國家
-            <input id="destinationCountryInput" list="countryList" required>
-          </label>
-          <label>
-            目的港
-            <input id="destinationPortInput" list="logisticsPortList" required>
-          </label>
-          <label>
-            預估天數
-            <input id="routeDaysInput" type="number" min="0" required>
-          </label>
-          <label>
-            距離 km
-            <input id="routeDistanceInput" type="number" min="0">
-          </label>
-          <label>
-            航線風險
-            <select id="routeRiskInput" required>
-              <option value="green">Green</option>
-              <option value="yellow">Yellow</option>
-              <option value="red">Red</option>
-            </select>
-          </label>
-          <label>
-            關鍵通道
-            <input id="chokepointsInput" placeholder="Malacca, Suez">
-          </label>
-        </div>
-        <details class="advanced-fields">
-          <summary>進階座標設定</summary>
-          <div class="form-grid">
-            <label>
-              起點緯度
-              <input id="originLatInput" type="number" step="0.000001">
-            </label>
-            <label>
-              起點經度
-              <input id="originLngInput" type="number" step="0.000001">
-            </label>
-            <label>
-              終點緯度
-              <input id="destinationLatInput" type="number" step="0.000001">
-            </label>
-            <label>
-              終點經度
-              <input id="destinationLngInput" type="number" step="0.000001">
-            </label>
-          </div>
-          <label>
-            路徑座標
-            <textarea id="routePathInput" placeholder="31.2304,121.4737; 1.3521,103.8198; 33.7405,-118.2775"></textarea>
-          </label>
-        </details>
-        <label>
-          航線備註
-          <textarea id="routeNotesInput"></textarea>
-        </label>
-        <div class="form-actions">
-          <button id="routeSubmitButton" class="button primary" type="submit">新增航線</button>
-          <button id="routeCancelEditButton" class="button ghost" type="button" hidden>取消編輯</button>
-        </div>
-        <p id="routeMessage" class="message" aria-live="polite"></p>
-      </form>
-    </section>
-
-    <section class="table-card">
-      <div class="table-toolbar">
-        <h2>航線情報管理</h2>
-      </div>
-
-      <div class="table-scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>航線</th>
-              <th>方式</th>
-              <th>起點</th>
-              <th>終點</th>
-              <th>天數</th>
-              <th>風險</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody id="routesTableBody"></tbody>
-        </table>
-      </div>
     </section>
 
     <section class="admin-entry-grid">
@@ -275,70 +162,28 @@
       </section>
 
       <section class="table-card">
-        <div class="table-toolbar">
-          <div>
-            <h2>承運商資料</h2>
-            <p class="hint">維護船公司、航空公司或貨代，供歷史報價標記來源。</p>
-          </div>
-        </div>
-        <form id="carrierForm" class="compact-form">
-          <input id="carrierId" type="hidden">
-          <div class="form-grid">
-            <label>
-              承運商
-              <input id="carrierNameInput" required>
-            </label>
-            <label>
-              類型
-              <select id="carrierTypeInput" required>
-                <option value="ocean">船公司</option>
-                <option value="air">航空公司</option>
-                <option value="forwarder">貨代</option>
-              </select>
-            </label>
-            <label>
-              網站
-              <input id="carrierWebsiteInput" type="url">
-            </label>
-            <label>
-              備註
-              <input id="carrierRemarksInput">
-            </label>
-          </div>
-          <div class="form-actions">
-            <button id="carrierSubmitButton" class="button primary" type="submit">新增承運商</button>
-            <button id="carrierCancelEditButton" class="button ghost" type="button" hidden>取消編輯</button>
-          </div>
-          <p id="carrierMessage" class="message" aria-live="polite"></p>
-        </form>
-        <div class="table-scroll compact-table">
-          <table>
-            <thead>
-              <tr>
-                <th>承運商</th>
-                <th>類型</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody id="carriersTableBody"></tbody>
-          </table>
-        </div>
-      </section>
-    </section>
-
-    <section class="table-card">
       <div class="table-toolbar">
         <div>
-          <h2>Broker 名錄</h2>
-          <p class="hint">維護各國/口岸的報關行與通關代理資訊，資料同步顯示於前台地圖 Broker 圖層。</p>
+          <h2>服務商名錄</h2>
+          <p class="hint">統一維護船公司、航空公司、貨代與報關行，資料同步顯示於前台服務商圖層。</p>
         </div>
       </div>
       <form id="brokerForm" class="compact-form">
         <input id="brokerId" type="hidden">
         <div class="form-grid">
           <label>
-            Broker 名稱
+            服務商名稱
             <input id="brokerNameInput" required>
+          </label>
+          <label>
+            服務類型
+            <select id="brokerTypeInput" required>
+              <option value="broker">報關行 / Broker</option>
+              <option value="forwarder">貨代</option>
+              <option value="ocean">船公司</option>
+              <option value="air">航空公司</option>
+              <option value="other">其他</option>
+            </select>
           </label>
           <label>
             國家
@@ -358,7 +203,7 @@
           <input id="brokerRemarksInput">
         </label>
         <div class="form-actions">
-          <button id="brokerSubmitButton" class="button primary" type="submit">新增 Broker</button>
+          <button id="brokerSubmitButton" class="button primary" type="submit">新增服務商</button>
           <button id="brokerCancelEditButton" class="button ghost" type="button" hidden>取消編輯</button>
         </div>
         <p id="brokerMessage" class="message" aria-live="polite"></p>
@@ -367,7 +212,8 @@
         <table>
           <thead>
             <tr>
-              <th>Broker</th>
+              <th>服務商</th>
+              <th>類型</th>
               <th>國家</th>
               <th>口岸</th>
               <th>聯絡資訊</th>
@@ -378,6 +224,7 @@
           <tbody id="brokersTableBody"></tbody>
         </table>
       </div>
+      </section>
     </section>
 
     <section class="table-card">
@@ -394,12 +241,6 @@
             關聯航線
             <select id="quoteRouteInput">
               <option value="">不指定</option>
-            </select>
-          </label>
-          <label>
-            承運商
-            <select id="quoteCarrierInput">
-              <option value="">未指定</option>
             </select>
           </label>
           <label>
@@ -444,7 +285,8 @@
           </label>
           <label>
             報價來源
-            <input id="quoteSourceInput" placeholder="Forwarder / Broker">
+            <input id="quoteSourceInput" list="serviceProviderList" placeholder="服務商 / 貨代 / Broker">
+            <datalist id="serviceProviderList"></datalist>
           </label>
         </div>
         <label>
@@ -464,7 +306,6 @@
               <th>日期</th>
               <th>航線</th>
               <th>方式</th>
-              <th>承運商</th>
               <th>單位</th>
               <th>金額</th>
               <th>來源</th>
@@ -499,9 +340,9 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../js/api.js?v=20260609-broker"></script>
-  <script src="../js/auth.js?v=20260609-broker"></script>
-  <script src="../js/search.js?v=20260609-broker"></script>
-  <script src="js/admin.js?v=20260609-broker"></script>
+  <script src="../js/api.js?v=20260610-history-routes"></script>
+  <script src="../js/auth.js?v=20260610-history-routes"></script>
+  <script src="../js/search.js?v=20260610-history-routes"></script>
+  <script src="js/admin.js?v=20260610-history-routes"></script>
 </body>
 </html>
