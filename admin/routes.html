@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>航線管理 | TCI 通關地圖</title>
+  <link rel="stylesheet" href="../css/style.css?v=20260611-ports">
+</head>
+<body data-page="routes">
+  <header class="topbar">
+    <a class="brand" href="../index.html">
+      <img src="../TCI.png" alt="TCI">
+      <span>通關地圖</span>
+    </a>
+    <nav class="nav-links">
+      <a href="../index.html">查詢</a>
+      <a id="adminNavLink" href="index.html">船務後台</a>
+      <a id="historyNavLink" href="history.html" hidden>歷史紀錄</a>
+      <a id="routesNavLink" aria-current="page" href="routes.html" hidden>航線管理</a>
+      <a id="portsNavLink" href="ports.html" hidden>港口管理</a>
+      <a id="brokersNavLink" href="brokers.html" hidden>服務商管理</a>
+      <a id="quotesNavLink" href="quotes.html" hidden>歷史報價</a>
+      <a id="userManagementNavLink" href="users.html" hidden>使用者管理</a>
+    </nav>
+    <div class="user-area">
+      <span id="userMeta">載入中...</span>
+      <button id="changePasswordButton" class="button ghost" type="button">修改密碼</button>
+      <button id="signOutButton" class="button ghost" type="button">登出</button>
+    </div>
+  </header>
+
+  <main class="page-shell admin-layout">
+    <section class="page-heading">
+      <div>
+        <p class="eyebrow">Route Intelligence</p>
+        <h1>航線管理</h1>
+      </div>
+      <span class="brand-chip">Risk &amp; Weather</span>
+    </section>
+
+    <datalist id="countryList"></datalist>
+    <datalist id="logisticsPortList"></datalist>
+
+    <section class="table-card">
+      <form id="routeForm" class="admin-form">
+        <input id="routeId" type="hidden">
+        <h2>航線風險情報</h2>
+        <p class="hint">日常只需填國家、港口、風險與天數；座標由系統依港口資料自動推定。天氣警示每 12 小時自動同步。</p>
+        <div class="form-grid">
+          <label>
+            航線名稱
+            <input id="routeNameInput" placeholder="Shanghai → Los Angeles">
+          </label>
+          <label>
+            運輸方式
+            <select id="transportModeInput" required>
+              <option value="ocean">海運</option>
+              <option value="air">空運</option>
+              <option value="multimodal">複合運輸</option>
+            </select>
+          </label>
+          <label>
+            起運國家
+            <input id="originCountryInput" list="countryList" required>
+          </label>
+          <label>
+            起運港
+            <input id="originPortInput" list="logisticsPortList" required>
+          </label>
+          <label>
+            目的國家
+            <input id="destinationCountryInput" list="countryList" required>
+          </label>
+          <label>
+            目的港
+            <input id="destinationPortInput" list="logisticsPortList" required>
+          </label>
+          <label>
+            預估天數
+            <input id="routeDaysInput" type="number" min="0" required>
+          </label>
+          <label>
+            距離 km
+            <input id="routeDistanceInput" type="number" min="0">
+          </label>
+          <label>
+            航線風險
+            <select id="routeRiskInput" required>
+              <option value="green">Green</option>
+              <option value="yellow">Yellow</option>
+              <option value="red">Red</option>
+            </select>
+          </label>
+          <label>
+            關鍵通道
+            <input id="chokepointsInput" placeholder="Malacca, Suez">
+          </label>
+        </div>
+        <details class="advanced-fields">
+          <summary>進階座標設定</summary>
+          <div class="form-grid">
+            <label>
+              起點緯度
+              <input id="originLatInput" type="number" step="0.000001">
+            </label>
+            <label>
+              起點經度
+              <input id="originLngInput" type="number" step="0.000001">
+            </label>
+            <label>
+              終點緯度
+              <input id="destinationLatInput" type="number" step="0.000001">
+            </label>
+            <label>
+              終點經度
+              <input id="destinationLngInput" type="number" step="0.000001">
+            </label>
+          </div>
+          <label>
+            路徑座標
+            <textarea id="routePathInput" placeholder="31.2304,121.4737; 1.3521,103.8198; 33.7405,-118.2775"></textarea>
+          </label>
+        </details>
+        <label>
+          航線備註
+          <textarea id="routeNotesInput"></textarea>
+        </label>
+        <div class="form-actions">
+          <button id="routeSubmitButton" class="button primary" type="submit">新增航線</button>
+          <button id="routeCancelEditButton" class="button ghost" type="button" hidden>取消編輯</button>
+        </div>
+        <p id="routeMessage" class="message" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section class="table-card">
+      <div class="table-toolbar">
+        <div>
+          <h2>航線清單</h2>
+          <p class="hint">前台地圖的航線圖層與天氣警示以此為準。</p>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>航線</th>
+              <th>方式</th>
+              <th>起點</th>
+              <th>終點</th>
+              <th>天數</th>
+              <th>風險</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="routesTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <div id="passwordDialog" class="modal-backdrop" hidden>
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="passwordDialogTitle">
+      <h2 id="passwordDialogTitle">修改密碼</h2>
+      <form id="passwordForm">
+        <label>
+          新密碼
+          <input id="newPassword" type="password" autocomplete="new-password" minlength="6" required>
+        </label>
+        <label>
+          再輸入一次
+          <input id="confirmPassword" type="password" autocomplete="new-password" minlength="6" required>
+        </label>
+        <div class="modal-actions">
+          <button class="button primary" type="submit">儲存新密碼</button>
+          <button id="cancelPasswordButton" class="button ghost" type="button">取消</button>
+        </div>
+      </form>
+      <p id="passwordMessage" class="message" aria-live="polite"></p>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/api.js?v=20260611-ports"></script>
+  <script src="../js/auth.js?v=20260611-ports"></script>
+  <script src="../js/search.js?v=20260611-ports"></script>
+  <script src="js/routes.js?v=20260611-ports"></script>
+</body>
+</html>

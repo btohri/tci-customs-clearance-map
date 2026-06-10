@@ -110,12 +110,18 @@
     const userMeta = document.getElementById('userMeta');
     const adminNavLink = document.getElementById('adminNavLink');
     const historyNavLink = document.getElementById('historyNavLink');
+    const routesNavLink = document.getElementById('routesNavLink');
     const portsNavLink = document.getElementById('portsNavLink');
+    const brokersNavLink = document.getElementById('brokersNavLink');
+    const quotesNavLink = document.getElementById('quotesNavLink');
     const userManagementNavLink = document.getElementById('userManagementNavLink');
     if (userMeta) userMeta.textContent = `${user.email}｜${role}`;
     if (adminNavLink) adminNavLink.hidden = !shippingRoles.includes(role);
     if (historyNavLink) historyNavLink.hidden = !shippingRoles.includes(role);
+    if (routesNavLink) routesNavLink.hidden = !shippingRoles.includes(role);
     if (portsNavLink) portsNavLink.hidden = !shippingRoles.includes(role);
+    if (brokersNavLink) brokersNavLink.hidden = !shippingRoles.includes(role);
+    if (quotesNavLink) quotesNavLink.hidden = !shippingRoles.includes(role);
     if (userManagementNavLink) userManagementNavLink.hidden = role !== 'admin';
   }
 

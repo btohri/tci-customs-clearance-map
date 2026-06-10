@@ -51,22 +51,32 @@ tci-customs-map/
 ├── index.html          # 首頁（查詢介面）
 ├── login.html          # 登入頁面
 ├── register.html       # 使用者自助註冊頁面
-├── admin/
-│   └── index.html      # Shipping Team 後台（新增/編輯通關紀錄）
+├── admin/              # 後台（一頁一功能，2026-06-11 拆分）
+│   ├── index.html      # 船務後台：通關紀錄新增/編輯
+│   ├── history.html    # 歷史紀錄：通關歷史查詢/篩選/分頁
+│   ├── routes.html     # 航線管理：航線風險情報
+│   ├── ports.html      # 港口管理：UN/LOCODE 同步 + 手動維護（分頁瀏覽）
+│   ├── brokers.html    # 服務商管理
+│   ├── quotes.html     # 歷史報價（國家→港口連動選單）
+│   └── users.html      # 使用者管理（僅 admin）
+├── admin/js/           # 各後台頁對應的 JS（admin/history/routes/ports/brokers/quotes/users.js）
 ├── js/
 │   ├── api.js          # 所有 Supabase 呼叫集中於此（未來轉 Worker 只改這裡）
-│   ├── auth.js         # 登入、登出、Session 管理
+│   ├── auth.js         # 登入、登出、Session、導覽列權限
 │   ├── search.js       # 查詢介面邏輯
 │   └── map.js          # Leaflet 世界地圖邏輯
-├── admin/js/
-│   └── admin.js        # 後台邏輯
 ├── supabase/
 │   └── functions/
-│       └── create-user/index.ts # Admin 建立使用者 Edge Function
+│       ├── create-user/index.ts            # Admin 建立使用者
+│       ├── sync-ports/index.ts             # UN/LOCODE 港口同步（V1.5）
+│       ├── sync-weather/index.ts           # Open-Meteo 航線天氣（V1.5）
+│       └── sync-trade-indicators/index.ts  # World Bank LPI（V1.5）
 ├── css/
 │   └── style.css       # 全站樣式
 ├── supabase_schema.sql # Supabase 初始化 SQL
-└── supabase_fix_user_role_rpc.sql # 角色 RPC 修補 SQL
+├── supabase_fix_user_role_rpc.sql # 角色 RPC 修補 SQL
+├── supabase_v1_5_public_data.sql  # V1.5 新表 + pg_cron 排程
+└── DEPLOY_V1_5.md      # V1.5 部署指南
 ```
 
 ---

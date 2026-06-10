@@ -16,7 +16,10 @@
       <a href="../index.html">查詢</a>
       <a id="adminNavLink" aria-current="page" href="index.html">船務後台</a>
       <a id="historyNavLink" href="history.html" hidden>歷史紀錄</a>
+      <a id="routesNavLink" href="routes.html" hidden>航線管理</a>
       <a id="portsNavLink" href="ports.html" hidden>港口管理</a>
+      <a id="brokersNavLink" href="brokers.html" hidden>服務商管理</a>
+      <a id="quotesNavLink" href="quotes.html" hidden>歷史報價</a>
       <a id="userManagementNavLink" href="users.html" hidden>使用者管理</a>
     </nav>
     <div class="user-area">
@@ -39,12 +42,12 @@
       <form id="recordForm" class="admin-form">
         <input id="recordId" type="hidden">
         <h2>通關紀錄</h2>
+        <p class="hint">查詢與編輯既有紀錄請至「歷史紀錄」分頁；航線、港口、服務商、報價各有獨立分頁。</p>
         <div class="form-grid">
           <label>
             國家
             <input id="countryInput" list="countryList" required>
             <datalist id="countryList"></datalist>
-            <datalist id="logisticsPortList"></datalist>
           </label>
           <label>
             口岸
@@ -103,187 +106,6 @@
         </div>
         <p id="adminMessage" class="message" aria-live="polite"></p>
       </form>
-    </section>
-
-    <section class="admin-entry-grid single-column">
-      <section class="table-card">
-      <div class="table-toolbar">
-        <div>
-          <h2>服務商名錄</h2>
-          <p class="hint">統一維護船公司、航空公司、貨代與報關行，資料同步顯示於前台服務商圖層。</p>
-        </div>
-      </div>
-      <form id="brokerForm" class="compact-form">
-        <input id="brokerId" type="hidden">
-        <div class="form-grid">
-          <label>
-            服務商名稱
-            <input id="brokerNameInput" required>
-          </label>
-          <label>
-            服務類型
-            <select id="brokerTypeInput" required>
-              <option value="broker">報關行 / Broker</option>
-              <option value="forwarder">貨代</option>
-              <option value="ocean">船公司</option>
-              <option value="air">航空公司</option>
-              <option value="other">其他</option>
-            </select>
-          </label>
-          <label>
-            國家
-            <input id="brokerCountryInput" list="countryList" required>
-          </label>
-          <label>
-            口岸
-            <input id="brokerPortInput" list="logisticsPortList">
-          </label>
-          <label>
-            聯絡資訊
-            <input id="brokerContactInput" placeholder="Email / 電話 / 公司名稱">
-          </label>
-        </div>
-        <label>
-          備註
-          <input id="brokerRemarksInput">
-        </label>
-        <div class="form-actions">
-          <button id="brokerSubmitButton" class="button primary" type="submit">新增服務商</button>
-          <button id="brokerCancelEditButton" class="button ghost" type="button" hidden>取消編輯</button>
-        </div>
-        <p id="brokerMessage" class="message" aria-live="polite"></p>
-      </form>
-      <div class="table-scroll compact-table">
-        <table>
-          <thead>
-            <tr>
-              <th>服務商</th>
-              <th>類型</th>
-              <th>國家</th>
-              <th>口岸</th>
-              <th>聯絡資訊</th>
-              <th>備註</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody id="brokersTableBody"></tbody>
-        </table>
-      </div>
-      </section>
-    </section>
-
-    <section class="table-card">
-      <div class="table-toolbar">
-        <div>
-          <h2>歷史報價</h2>
-          <p class="hint">只作內部歷史參考，不代表即時真實運價。</p>
-        </div>
-      </div>
-      <form id="quoteForm" class="compact-form">
-        <input id="quoteId" type="hidden">
-        <div class="form-grid quote-grid">
-          <label>
-            關聯航線
-            <select id="quoteRouteInput">
-              <option value="">不指定</option>
-            </select>
-          </label>
-          <label>
-            起運國家
-            <select id="quoteOriginCountrySelect">
-              <option value="">請選擇國家</option>
-            </select>
-          </label>
-          <label>
-            起運港
-            <select id="quoteOriginPortSelect" disabled>
-              <option value="">請先選國家</option>
-            </select>
-          </label>
-          <label id="quoteOriginPortManualLabel" hidden>
-            起運港（手動輸入）
-            <input id="quoteOriginPortManual" placeholder="輸入港口名稱">
-          </label>
-          <label>
-            目的國家
-            <select id="quoteDestinationCountrySelect">
-              <option value="">請選擇國家</option>
-            </select>
-          </label>
-          <label>
-            目的港
-            <select id="quoteDestinationPortSelect" disabled>
-              <option value="">請先選國家</option>
-            </select>
-          </label>
-          <label id="quoteDestinationPortManualLabel" hidden>
-            目的港（手動輸入）
-            <input id="quoteDestinationPortManual" placeholder="輸入港口名稱">
-          </label>
-          <label>
-            運輸方式
-            <select id="quoteTransportModeInput" required>
-              <option value="ocean">海運</option>
-              <option value="air">空運</option>
-              <option value="multimodal">複合運輸</option>
-            </select>
-          </label>
-          <label>
-            櫃型/計費單位
-            <input id="containerTypeInput" placeholder="40HQ / pallet / kg">
-          </label>
-          <label>
-            計費重量 kg
-            <input id="chargeableWeightInput" type="number" min="0" step="0.01">
-          </label>
-          <label>
-            金額
-            <input id="quoteAmountInput" type="number" min="0" step="0.01" required>
-          </label>
-          <label>
-            幣別
-            <input id="quoteCurrencyInput" value="USD" required>
-          </label>
-          <label>
-            報價日期
-            <input id="quoteDateInput" type="date" required>
-          </label>
-          <label>
-            有效至
-            <input id="quoteValidUntilInput" type="date">
-          </label>
-          <label>
-            報價來源
-            <input id="quoteSourceInput" list="serviceProviderList" placeholder="服務商 / 貨代 / Broker">
-            <datalist id="serviceProviderList"></datalist>
-          </label>
-        </div>
-        <label>
-          備註
-          <textarea id="quoteRemarksInput"></textarea>
-        </label>
-        <div class="form-actions">
-          <button id="quoteSubmitButton" class="button primary" type="submit">新增報價</button>
-          <button id="quoteCancelEditButton" class="button ghost" type="button" hidden>取消編輯</button>
-        </div>
-        <p id="quoteMessage" class="message" aria-live="polite"></p>
-      </form>
-      <div class="table-scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>日期</th>
-              <th>航線</th>
-              <th>方式</th>
-              <th>單位</th>
-              <th>金額</th>
-              <th>來源</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody id="quotesTableBody"></tbody>
-        </table>
-      </div>
     </section>
   </main>
 
