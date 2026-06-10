@@ -164,7 +164,7 @@
 
   async function loadPorts() {
     try {
-      ports = await window.TCIApi.getAllPorts();
+      ports = await window.TCIApi.searchPorts({ limit: 300 });
       renderDatalists();
     } catch (error) {
       ports = [];

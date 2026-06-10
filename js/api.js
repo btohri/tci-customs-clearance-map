@@ -451,6 +451,49 @@
     return data || [];
   }
 
+  // 港口已由 UN/LOCODE 自動同步（上萬筆），查詢一律帶條件與筆數上限
+  async function searchPorts({ country = '', keyword = '', limit = 300 } = {}) {
+    let query = getClient().from('ports').select('*');
+    if (country) query = query.eq('country', normalizeCountry(country));
+    if (keyword) query = query.ilike('port_name', `%${keyword.trim()}%`);
+    const { data, error } = await query
+      .order('country')
+      .order('port_name')
+      .limit(limit);
+    if (error) throw error;
+    return data || [];
+  }
+
+  // 港口分頁查詢（港口管理頁用），回傳 { rows, count }
+  async function searchPortsPaged({ country = '', keyword = '', page = 1, pageSize = 50 } = {}) {
+    let query = getClient().from('ports').select('*', { count: 'exact' });
+    if (country) query = query.eq('country', normalizeCountry(country));
+    if (keyword) query = query.ilike('port_name', `%${keyword.trim()}%`);
+    const from = (Math.max(1, page) - 1) * pageSize;
+    const { data, error, count } = await query
+      .order('country')
+      .order('port_name')
+      .range(from, from + pageSize - 1);
+    if (error) throw error;
+    return { rows: data || [], count: count ?? 0 };
+  }
+
+  // 只抓航線起訖兩國的港口，供座標自動帶入比對用
+  async function getPortsForRouteCountries(data) {
+    const countries = [...new Set(
+      [data.origin_country, data.destination_country].map(normalizeCountry).filter(Boolean)
+    )];
+    const results = [];
+    for (const country of countries) {
+      try {
+        results.push(...await searchPorts({ country, limit: 1000 }));
+      } catch (error) {
+        // 忽略單一國家查詢失敗，照常使用內建座標 fallback
+      }
+    }
+    return results;
+  }
+
   async function addPort(data) {
     const { data: inserted, error } = await getClient()
       .from('ports')
@@ -532,7 +575,7 @@
   async function addRoute(data) {
     let ports = [];
     try {
-      ports = await getAllPorts();
+      ports = await getPortsForRouteCountries(data);
     } catch (error) {
       ports = [];
     }
@@ -549,7 +592,7 @@
   async function updateRoute(id, data) {
     let ports = [];
     try {
-      ports = await getAllPorts();
+      ports = await getPortsForRouteCountries(data);
     } catch (error) {
       ports = [];
     }
@@ -867,6 +910,8 @@
     deleteRecord,
     getAllRecords,
     getAllPorts,
+    searchPorts,
+    searchPortsPaged,
     addPort,
     updatePort,
     deletePort,

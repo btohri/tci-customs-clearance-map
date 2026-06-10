@@ -121,23 +121,12 @@
     };
   }
 
-  function getPortFormData() {
-    return {
-      port_name: field('portNameInput').value.trim(),
-      country: window.TCIApi.normalizeCountry(field('portCountryInput').value),
-      unlocode: field('unlocodeInput').value.trim(),
-      latitude: optionalNumber('portLatitudeInput'),
-      longitude: optionalNumber('portLongitudeInput'),
-      source: field('portSourceInput').value.trim()
-    };
-  }
-
   function getQuoteFormData() {
     return {
       route_id: field('quoteRouteInput').value || null,
       carrier_id: null,
-      origin_port: field('quoteOriginPortInput').value.trim(),
-      destination_port: field('quoteDestinationPortInput').value.trim(),
+      origin_port: quotePortValue('Origin'),
+      destination_port: quotePortValue('Destination'),
       transport_mode: field('quoteTransportModeInput').value,
       container_type: field('containerTypeInput').value.trim(),
       chargeable_weight_kg: optionalNumber('chargeableWeightInput'),
@@ -186,28 +175,110 @@
     setRouteFormData({});
   }
 
-  function setPortFormData(port) {
-    field('portId').value = port.id || '';
-    field('portNameInput').value = port.port_name || '';
-    field('portCountryInput').value = port.country ? window.TCIApi.displayCountry(port.country) : '';
-    field('unlocodeInput').value = port.unlocode || '';
-    field('portLatitudeInput').value = port.latitude ?? '';
-    field('portLongitudeInput').value = port.longitude ?? '';
-    field('portSourceInput').value = port.source || '';
-    field('portSubmitButton').textContent = port.id ? '儲存港口' : '新增港口';
-    field('portCancelEditButton').hidden = !port.id;
+  // ===== 報價表單：國家 → 港口 連動選單 =====
+  const MANUAL_PORT = '__manual__';
+
+  function fillQuoteCountrySelects() {
+    const options = '<option value="">請選擇國家</option>' + window.TCIApi.countryAliases.map((country) => `
+      <option value="${window.TCISearch.escapeHtml(country.value)}">${window.TCISearch.escapeHtml(window.TCIApi.displayCountry(country.value))}</option>
+    `).join('');
+    ['quoteOriginCountrySelect', 'quoteDestinationCountrySelect'].forEach((id) => {
+      if (field(id)) field(id).innerHTML = options;
+    });
   }
 
-  function resetPortForm() {
-    field('portForm').reset();
-    setPortFormData({});
+  function setQuotePortManualVisible(side, visible) {
+    const label = field(`quote${side}PortManualLabel`);
+    if (label) label.hidden = !visible;
+  }
+
+  async function loadQuotePortOptions(side, country, selectedPort = '') {
+    const select = field(`quote${side}PortSelect`);
+    if (!select) return;
+    if (!country) {
+      select.disabled = true;
+      select.innerHTML = '<option value="">請先選國家</option>';
+      setQuotePortManualVisible(side, false);
+      return;
+    }
+    select.disabled = true;
+    select.innerHTML = '<option value="">載入港口中...</option>';
+    let list = [];
+    try {
+      list = await window.TCIApi.searchPorts({ country, limit: 1000 });
+    } catch (error) {
+      list = [];
+    }
+    select.innerHTML = ['<option value="">請選擇港口</option>']
+      .concat(list.map((port) => `<option value="${window.TCISearch.escapeHtml(port.port_name)}">${window.TCISearch.escapeHtml(`${port.port_name}${port.unlocode ? `（${port.unlocode}）` : ''}`)}</option>`))
+      .concat([`<option value="${MANUAL_PORT}">其他（手動輸入）</option>`])
+      .join('');
+    select.disabled = false;
+    if (selectedPort) {
+      const match = list.find((port) => String(port.port_name).toLowerCase() === String(selectedPort).toLowerCase());
+      if (match) {
+        select.value = match.port_name;
+        setQuotePortManualVisible(side, false);
+      } else {
+        select.value = MANUAL_PORT;
+        const manual = field(`quote${side}PortManual`);
+        if (manual) manual.value = selectedPort;
+        setQuotePortManualVisible(side, true);
+      }
+    } else {
+      setQuotePortManualVisible(side, false);
+    }
+  }
+
+  function quotePortValue(side) {
+    const select = field(`quote${side}PortSelect`);
+    const manual = field(`quote${side}PortManual`);
+    if (select && select.value && select.value !== MANUAL_PORT) return select.value;
+    return manual ? manual.value.trim() : '';
+  }
+
+  async function setQuotePort(side, country, portName) {
+    const countrySelect = field(`quote${side}CountrySelect`);
+    const normalized = country ? window.TCIApi.normalizeCountry(country) : '';
+    if (countrySelect) countrySelect.value = normalized;
+    if (!normalized) {
+      if (portName) {
+        // 沒有國家資訊（例如編輯舊資料）→ 直接手動輸入模式
+        const select = field(`quote${side}PortSelect`);
+        if (select) {
+          select.disabled = false;
+          select.innerHTML = `<option value="${MANUAL_PORT}">其他（手動輸入）</option>`;
+          select.value = MANUAL_PORT;
+        }
+        const manual = field(`quote${side}PortManual`);
+        if (manual) manual.value = portName;
+        setQuotePortManualVisible(side, true);
+      } else {
+        await loadQuotePortOptions(side, '');
+      }
+      return;
+    }
+    await loadQuotePortOptions(side, normalized, portName || '');
+  }
+
+  function bindQuotePortSelectors() {
+    [['Origin', 'quoteOriginCountrySelect'], ['Destination', 'quoteDestinationCountrySelect']].forEach(([side, id]) => {
+      field(id)?.addEventListener('change', () => {
+        const manual = field(`quote${side}PortManual`);
+        if (manual) manual.value = '';
+        loadQuotePortOptions(side, field(id).value);
+      });
+      field(`quote${side}PortSelect`)?.addEventListener('change', () => {
+        setQuotePortManualVisible(side, field(`quote${side}PortSelect`).value === MANUAL_PORT);
+      });
+    });
   }
 
   function setQuoteFormData(quote) {
     field('quoteId').value = quote.id || '';
     field('quoteRouteInput').value = quote.route_id || '';
-    field('quoteOriginPortInput').value = quote.origin_port || '';
-    field('quoteDestinationPortInput').value = quote.destination_port || '';
+    setQuotePort('Origin', quote.origin_country || '', quote.origin_port || '');
+    setQuotePort('Destination', quote.destination_country || '', quote.destination_port || '');
     field('quoteTransportModeInput').value = quote.transport_mode || 'ocean';
     field('containerTypeInput').value = quote.container_type || '';
     field('chargeableWeightInput').value = quote.chargeable_weight_kg ?? '';
@@ -244,12 +315,6 @@
     ];
     if (required.some((key) => !data[key]) || !Number.isFinite(data.estimated_days)) {
       throw new Error('請填寫航線必填欄位。');
-    }
-  }
-
-  function validatePort(data) {
-    if (!data.port_name || !data.country) {
-      throw new Error('請填寫港口名稱與國家。');
     }
   }
 
@@ -404,52 +469,22 @@
     }
   }
 
-  function renderPortsTable() {
-    field('portsTableBody').innerHTML = ports.map((port) => `
-      <tr>
-        <td>${window.TCISearch.escapeHtml(port.port_name)}</td>
-        <td>${window.TCISearch.escapeHtml(window.TCIApi.displayCountry(port.country))}</td>
-        <td>${window.TCISearch.escapeHtml(port.unlocode || '')}</td>
-        <td>
-          <div class="action-row">
-            <button class="button ghost port-edit-button" type="button" data-id="${port.id}">編輯</button>
-            <button class="button danger port-delete-button" type="button" data-id="${port.id}">刪除</button>
-          </div>
-        </td>
-      </tr>
-    `).join('');
-
-    document.querySelectorAll('.port-edit-button').forEach((button) => {
-      button.addEventListener('click', () => {
-        const port = ports.find((item) => item.id === button.dataset.id);
-        if (port) setPortFormData(port);
-      });
-    });
-
-    document.querySelectorAll('.port-delete-button').forEach((button) => {
-      button.addEventListener('click', async () => {
-        if (!confirm('確定要刪除此筆港口資料？')) return;
+  // 服務商口岸建議：依服務商國家動態載入 datalist（港口管理已移至 ports.html）
+  let brokerPortTimer = null;
+  function bindBrokerPortSuggestions() {
+    field('brokerCountryInput')?.addEventListener('input', () => {
+      clearTimeout(brokerPortTimer);
+      brokerPortTimer = setTimeout(async () => {
+        const country = field('brokerCountryInput').value.trim();
+        if (!country) return;
         try {
-          await window.TCIApi.deletePort(button.dataset.id);
-          scopedMessage('portMessage', '港口已刪除。', 'success');
-          await loadPorts();
+          ports = await window.TCIApi.searchPorts({ country, limit: 300 });
+          renderLogisticsDatalists();
         } catch (error) {
-          scopedMessage('portMessage', error.message, 'error');
+          // 忽略建議載入失敗
         }
-      });
+      }, 350);
     });
-  }
-
-  async function loadPorts() {
-    try {
-      ports = await window.TCIApi.getAllPorts();
-      renderPortsTable();
-      renderLogisticsDatalists();
-    } catch (error) {
-      ports = [];
-      renderPortsTable();
-      scopedMessage('portMessage', `港口資料表尚未啟用：${error.message}`, 'error');
-    }
   }
 
   function quoteRouteText(quote) {
@@ -560,32 +595,6 @@
     });
 
     field('routeCancelEditButton')?.addEventListener('click', resetRouteForm);
-  }
-
-  function bindPortForm() {
-    field('portForm').addEventListener('submit', async (event) => {
-      event.preventDefault();
-      try {
-        const data = getPortFormData();
-        validatePort(data);
-        const id = field('portId').value;
-        field('portSubmitButton').disabled = true;
-        if (id) {
-          await window.TCIApi.updatePort(id, data);
-          scopedMessage('portMessage', '港口已更新。', 'success');
-        } else {
-          await window.TCIApi.addPort(data);
-          scopedMessage('portMessage', '港口已新增。', 'success');
-        }
-        resetPortForm();
-        await loadPorts();
-      } catch (error) {
-        scopedMessage('portMessage', error.message, 'error');
-      } finally {
-        field('portSubmitButton').disabled = false;
-      }
-    });
-    field('portCancelEditButton').addEventListener('click', resetPortForm);
   }
 
   function getBrokerFormData() {
@@ -716,8 +725,8 @@
     field('quoteRouteInput').addEventListener('change', () => {
       const route = routes.find((item) => item.id === field('quoteRouteInput').value);
       if (!route) return;
-      field('quoteOriginPortInput').value = route.origin_port || '';
-      field('quoteDestinationPortInput').value = route.destination_port || '';
+      setQuotePort('Origin', route.origin_country || '', route.origin_port || '');
+      setQuotePort('Destination', route.destination_country || '', route.destination_port || '');
       field('quoteTransportModeInput').value = route.transport_mode || 'ocean';
     });
 
@@ -752,12 +761,13 @@
     window.TCISearch.fillDosageForms(field('dosageFormInput'));
     bindForm();
     bindRouteForm();
-    bindPortForm();
     bindBrokerForm();
+    bindBrokerPortSuggestions();
     bindQuoteForm();
+    fillQuoteCountrySelects();
+    bindQuotePortSelectors();
     setQuoteFormData({});
     await loadRecords();
-    await loadPorts();
     await loadBrokerDirectory();
     await loadRoutes();
     await loadQuotes();

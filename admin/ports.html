@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>港口管理 | TCI 通關地圖</title>
+  <link rel="stylesheet" href="../css/style.css?v=20260611-ports">
+</head>
+<body data-page="ports">
+  <header class="topbar">
+    <a class="brand" href="../index.html">
+      <img src="../TCI.png" alt="TCI">
+      <span>通關地圖</span>
+    </a>
+    <nav class="nav-links">
+      <a href="../index.html">查詢</a>
+      <a id="adminNavLink" href="index.html">船務後台</a>
+      <a id="historyNavLink" href="history.html" hidden>歷史紀錄</a>
+      <a id="portsNavLink" aria-current="page" href="ports.html" hidden>港口管理</a>
+      <a id="userManagementNavLink" href="users.html" hidden>使用者管理</a>
+    </nav>
+    <div class="user-area">
+      <span id="userMeta">載入中...</span>
+      <button id="changePasswordButton" class="button ghost" type="button">修改密碼</button>
+      <button id="signOutButton" class="button ghost" type="button">登出</button>
+    </div>
+  </header>
+
+  <main class="page-shell admin-layout">
+    <section class="page-heading">
+      <div>
+        <p class="eyebrow">Port Directory</p>
+        <h1>港口管理</h1>
+      </div>
+      <span class="brand-chip">UN/LOCODE Sync</span>
+    </section>
+
+    <datalist id="countryList"></datalist>
+
+    <section class="table-card">
+      <div class="table-toolbar">
+        <div>
+          <h2>新增 / 編輯港口</h2>
+          <p class="hint">港口由 UN/LOCODE 每月自動同步；手動新增的港口（不填 UN/LOCODE）不會被同步覆蓋。</p>
+        </div>
+      </div>
+      <form id="portForm" class="compact-form">
+        <input id="portId" type="hidden">
+        <div class="form-grid">
+          <label>
+            港口名稱
+            <input id="portNameInput" required>
+          </label>
+          <label>
+            國家
+            <input id="portCountryInput" list="countryList" required>
+          </label>
+          <label>
+            UN/LOCODE
+            <input id="unlocodeInput" placeholder="TWKHH">
+          </label>
+          <label>
+            來源
+            <input id="portSourceInput" placeholder="manual">
+          </label>
+          <label>
+            緯度
+            <input id="portLatitudeInput" type="number" step="0.000001">
+          </label>
+          <label>
+            經度
+            <input id="portLongitudeInput" type="number" step="0.000001">
+          </label>
+        </div>
+        <div class="form-actions">
+          <button id="portSubmitButton" class="button primary" type="submit">新增港口</button>
+          <button id="portCancelEditButton" class="button ghost" type="button" hidden>取消編輯</button>
+        </div>
+        <p id="portMessage" class="message" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section class="table-card">
+      <div class="table-toolbar">
+        <div>
+          <h2>港口清單</h2>
+          <p id="portFilterHint" class="hint" aria-live="polite">載入中...</p>
+        </div>
+      </div>
+      <div class="form-grid">
+        <label>
+          篩選國家
+          <input id="portFilterCountry" list="countryList" placeholder="例：台灣 / Taiwan">
+        </label>
+        <label>
+          搜尋港口
+          <input id="portFilterKeyword" placeholder="港口名稱關鍵字">
+        </label>
+      </div>
+      <div class="table-scroll compact-table">
+        <table>
+          <thead>
+            <tr>
+              <th>港口</th>
+              <th>國家</th>
+              <th>UN/LOCODE</th>
+              <th>經緯度</th>
+              <th>來源</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="portsTableBody"></tbody>
+        </table>
+      </div>
+      <div class="form-actions" style="justify-content: center; align-items: center; gap: 0.75rem; margin-top: 0.75rem;">
+        <button id="portPrevButton" class="button ghost" type="button">上一頁</button>
+        <span id="portPageInfo" class="hint">第 1 / 1 頁</span>
+        <button id="portNextButton" class="button ghost" type="button">下一頁</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="passwordDialog" class="modal-backdrop" hidden>
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="passwordDialogTitle">
+      <h2 id="passwordDialogTitle">修改密碼</h2>
+      <form id="passwordForm">
+        <label>
+          新密碼
+          <input id="newPassword" type="password" autocomplete="new-password" minlength="6" required>
+        </label>
+        <label>
+          再輸入一次
+          <input id="confirmPassword" type="password" autocomplete="new-password" minlength="6" required>
+        </label>
+        <div class="modal-actions">
+          <button class="button primary" type="submit">儲存新密碼</button>
+          <button id="cancelPasswordButton" class="button ghost" type="button">取消</button>
+        </div>
+      </form>
+      <p id="passwordMessage" class="message" aria-live="polite"></p>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/api.js?v=20260611-ports"></script>
+  <script src="../js/auth.js?v=20260611-ports"></script>
+  <script src="../js/search.js?v=20260611-ports"></script>
+  <script src="js/ports.js?v=20260611-ports"></script>
+</body>
+</html>
