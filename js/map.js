@@ -184,6 +184,16 @@
     return `<p class="hint">${weatherIcon(weather.alert_level)} 航線天氣（未來 5 天）：${label}｜${window.TCISearch.escapeHtml(weather.alert_summary || '')}</p>`;
   }
 
+  function renderSuggestedRisk(route) {
+    if (!route.suggested_risk_level) return '';
+    return `
+      <div class="suggested-risk suggested-risk-${route.suggested_risk_level}">
+        <strong>系統建議：${window.TCISearch.riskText(route.suggested_risk_level)}</strong>
+        ${route.suggested_risk_reason ? `<span>${window.TCISearch.escapeHtml(route.suggested_risk_reason)}</span>` : ''}
+      </div>
+    `;
+  }
+
   function renderRouteCards(routeList) {
     if (!routeList.length) {
       return '<p class="hint">此國家尚無航線情報。</p>';
@@ -200,6 +210,7 @@
           <span>${window.TCISearch.escapeHtml(route.estimated_days || '--')} 天</span>
           <span>${window.TCISearch.escapeHtml(route.distance_km || '--')} km</span>
         </div>
+        ${renderSuggestedRisk(route)}
         ${renderRouteWeather(route)}
         ${renderQuoteSummary(route)}
         ${route.chokepoints ? `<p class="hint">關鍵通道：${window.TCISearch.escapeHtml(route.chokepoints)}</p>` : ''}
@@ -236,10 +247,13 @@
     const weatherLine = weather
       ? `<br>${weatherIcon(weather.alert_level)} ${window.TCISearch.escapeHtml(weather.alert_summary || '')}`
       : '';
+    const suggestedLine = route.suggested_risk_level
+      ? `<br>系統建議：${window.TCISearch.escapeHtml(window.TCISearch.riskText(route.suggested_risk_level))}`
+      : '';
     return `
       <strong>${window.TCISearch.escapeHtml(route.route_name)}</strong><br>
       ${window.TCISearch.escapeHtml(transportText(route.transport_mode))}｜${window.TCISearch.escapeHtml(window.TCISearch.riskText(route.risk_level))}<br>
-      ${window.TCISearch.escapeHtml(route.estimated_days || '--')} 天｜${window.TCISearch.escapeHtml(route.distance_km || '--')} km${weatherLine}
+      ${window.TCISearch.escapeHtml(route.estimated_days || '--')} 天｜${window.TCISearch.escapeHtml(route.distance_km || '--')} km${suggestedLine}${weatherLine}
     `;
   }
 

@@ -770,6 +770,42 @@ tbody tr:hover {
   font-size: 0.84rem;
 }
 
+.suggested-risk {
+  display: grid;
+  gap: 0.28rem;
+  margin-top: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.62rem 0.72rem;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.suggested-risk strong {
+  font-size: 0.92rem;
+}
+
+.suggested-risk span,
+.table-note {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.suggested-risk-green {
+  border-color: rgba(90, 240, 189, 0.3);
+  background: var(--green-bg);
+}
+
+.suggested-risk-yellow {
+  border-color: rgba(242, 184, 75, 0.34);
+  background: var(--yellow-bg);
+}
+
+.suggested-risk-red {
+  border-color: rgba(233, 79, 92, 0.34);
+  background: var(--red-bg);
+}
+
 .admin-layout {
   display: grid;
   gap: 1.25rem;

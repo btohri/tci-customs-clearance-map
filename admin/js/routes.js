@@ -13,6 +13,21 @@
     multimodal: '複合運輸'
   };
 
+  function renderSuggestedRisk(route) {
+    if (!route.suggested_risk_level) {
+      return '<span class="cell-badge badge-neutral">尚未同步</span>';
+    }
+    const reason = route.suggested_risk_reason
+      ? `<div class="table-note">${window.TCISearch.escapeHtml(route.suggested_risk_reason)}</div>`
+      : '';
+    return `
+      <span class="cell-badge badge-${route.suggested_risk_level}">
+        ${window.TCISearch.escapeHtml(labels[route.suggested_risk_level] || route.suggested_risk_level)}
+      </span>
+      ${reason}
+    `;
+  }
+
   function field(id) {
     return document.getElementById(id);
   }
@@ -149,6 +164,7 @@
         <td>${window.TCISearch.escapeHtml(window.TCIApi.displayCountry(route.destination_country))}<br>${window.TCISearch.escapeHtml(route.destination_port)}</td>
         <td>${window.TCISearch.escapeHtml(route.estimated_days || '--')}</td>
         <td><span class="cell-badge badge-${route.risk_level || 'neutral'}">${window.TCISearch.escapeHtml(labels[route.risk_level] || route.risk_level)}</span></td>
+        <td>${renderSuggestedRisk(route)}</td>
         <td>
           <div class="action-row">
             <button class="button ghost route-edit-button" type="button" data-id="${route.id}">編輯</button>

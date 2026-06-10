@@ -1,6 +1,6 @@
 # TCI Customs Clearance Map — V2 規劃
 
-> 建立：2026-06-12｜狀態：規劃中，尚未動工
+> 建立：2026-06-12｜狀態：P1 已動工
 > V1.x 現況見 `PROJECT_SPEC.md`，公開資料同步見 `DEPLOY_V1_5.md`
 
 ---
@@ -34,6 +34,12 @@ Green：  其餘
 4. sync_logs 照舊記錄
 
 **工作量估計**：一個 Edge Function + 一個 SQL migration + 前後台各一小段顯示。
+
+**動工紀錄（2026-06-12）**：
+- SQL：`supabase_v2_route_risk.sql`
+- Edge Function：`supabase/functions/sync-route-risk/index.ts`
+- 前台：航線卡片與 popup 顯示系統建議
+- 後台：航線清單顯示系統建議與原因
 
 ---
 
