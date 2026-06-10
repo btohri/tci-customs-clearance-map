@@ -10,6 +10,7 @@
   let routes = [];
   let quotes = [];
   let brokers = [];
+  let weatherAlerts = [];
   let routesEnabled = true;
   let routesAvailable = true;
   let brokersEnabled = false;
@@ -84,6 +85,28 @@
     }[mode] || mode || '未分類';
   }
 
+  const weatherRank = { green: 1, yellow: 2, red: 3 };
+
+  // 取一條航線所有觀測點中最嚴重的天氣警示
+  function getRouteWeather(route) {
+    const points = weatherAlerts.filter((alert) => alert.route_id === route.id);
+    if (!points.length) return null;
+    return points.reduce((worst, point) => (
+      weatherRank[point.alert_level] > weatherRank[worst.alert_level] ? point : worst
+    ));
+  }
+
+  function weatherIcon(level) {
+    return { green: '🌤', yellow: '🌬', red: '⛈' }[level] || '';
+  }
+
+  function renderRouteWeather(route) {
+    const weather = getRouteWeather(route);
+    if (!weather) return '';
+    const label = { green: '正常', yellow: '注意', red: '警戒' }[weather.alert_level] || '';
+    return `<p class="hint">${weatherIcon(weather.alert_level)} 航線天氣（未來 5 天）：${label}｜${window.TCISearch.escapeHtml(weather.alert_summary || '')}</p>`;
+  }
+
   function renderRouteCards(routeList) {
     if (!routeList.length) {
       return '<p class="hint">此國家尚無航線情報。</p>';
@@ -100,6 +123,7 @@
           <span>${window.TCISearch.escapeHtml(route.estimated_days || '--')} 天</span>
           <span>${window.TCISearch.escapeHtml(route.distance_km || '--')} km</span>
         </div>
+        ${renderRouteWeather(route)}
         ${renderQuoteSummary(route)}
         ${route.chokepoints ? `<p class="hint">關鍵通道：${window.TCISearch.escapeHtml(route.chokepoints)}</p>` : ''}
         ${route.notes ? `<p>${window.TCISearch.escapeHtml(route.notes)}</p>` : ''}
@@ -131,10 +155,14 @@
   }
 
   function renderRoutePopup(route) {
+    const weather = getRouteWeather(route);
+    const weatherLine = weather
+      ? `<br>${weatherIcon(weather.alert_level)} ${window.TCISearch.escapeHtml(weather.alert_summary || '')}`
+      : '';
     return `
       <strong>${window.TCISearch.escapeHtml(route.route_name)}</strong><br>
       ${window.TCISearch.escapeHtml(transportText(route.transport_mode))}｜${window.TCISearch.escapeHtml(window.TCISearch.riskText(route.risk_level))}<br>
-      ${window.TCISearch.escapeHtml(route.estimated_days || '--')} 天｜${window.TCISearch.escapeHtml(route.distance_km || '--')} km
+      ${window.TCISearch.escapeHtml(route.estimated_days || '--')} 天｜${window.TCISearch.escapeHtml(route.distance_km || '--')} km${weatherLine}
     `;
   }
 
@@ -171,6 +199,22 @@
     });
   }
 
+  function formatLpiScore(value) {
+    return value === null || value === undefined || !Number.isFinite(Number(value))
+      ? '—'
+      : Number(value).toFixed(2);
+  }
+
+  function renderCountryIndicator(indicator) {
+    if (!indicator) return '';
+    const year = indicator.customs_year || indicator.lpi_year || '';
+    return `
+      <p class="hint">World Bank LPI${year ? `（${window.TCISearch.escapeHtml(year)}）` : ''}：
+        海關效率 ${formatLpiScore(indicator.customs_score)}／整體物流 ${formatLpiScore(indicator.lpi_score)}（1 低 ~ 5 高）
+      </p>
+    `;
+  }
+
   async function onCountryClick(countryName) {
     const country = normalizeCountryName(countryName);
     setSidebarLoading('載入口岸中...');
@@ -178,11 +222,18 @@
       const ports = await window.TCIApi.getPorts(country);
       const risk = riskSummary[country];
       const countryRoutes = routes.filter((route) => routeMatchesCountry(route, country));
+      let tradeIndicator = null;
+      try {
+        tradeIndicator = await window.TCIApi.getTradeIndicator(country);
+      } catch (error) {
+        tradeIndicator = null;
+      }
       document.getElementById('map-sidebar').innerHTML = `
         <div class="sidebar-title">
           <h2>${window.TCISearch.escapeHtml(window.TCIApi.displayCountry(country))}</h2>
           <span class="risk-badge risk-${risk || 'none'}">${window.TCISearch.riskIcon(risk)} ${window.TCISearch.riskText(risk)}</span>
         </div>
+        ${renderCountryIndicator(tradeIndicator)}
         <h3>選擇口岸</h3>
         <div class="port-grid">
           ${ports.map((port) => `<button class="button ghost port-button" type="button" data-country="${window.TCISearch.escapeHtml(country)}" data-port="${window.TCISearch.escapeHtml(port)}">${window.TCISearch.escapeHtml(port)}</button>`).join('') || '<p class="hint">此國家尚無口岸資料。</p>'}
@@ -283,6 +334,14 @@
       quotes = await window.TCIApi.getAllQuotes();
     } catch (error) {
       quotes = [];
+    }
+  }
+
+  async function loadWeatherAlerts() {
+    try {
+      weatherAlerts = await window.TCIApi.getRouteWeatherAlerts();
+    } catch (error) {
+      weatherAlerts = [];
     }
   }
 
@@ -399,6 +458,7 @@
     await refreshMapColors();
     await loadQuotes();
     await loadBrokers();
+    await loadWeatherAlerts();
     await loadRoutes();
     const response = await fetch(geoJsonUrl);
     const geojson = await response.json();

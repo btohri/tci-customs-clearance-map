@@ -47,6 +47,24 @@
     }[risk] || '—';
   }
 
+  function formatScore(value) {
+    return Number.isFinite(Number(value)) && value !== null ? Number(value).toFixed(2) : '—';
+  }
+
+  function renderTradeIndicator(indicator) {
+    if (!indicator) return '';
+    const year = indicator.customs_year || indicator.lpi_year || '';
+    return `
+      <h3>World Bank 物流指標（LPI，1 低 ~ 5 高）</h3>
+      <div class="stat-grid">
+        <div class="stat"><span>海關效率</span><strong>${formatScore(indicator.customs_score)}</strong></div>
+        <div class="stat"><span>整體物流</span><strong>${formatScore(indicator.lpi_score)}</strong></div>
+        <div class="stat"><span>時效性</span><strong>${formatScore(indicator.timeliness_score)}</strong></div>
+      </div>
+      <p class="hint">資料來源：World Bank LPI${year ? `（${escapeHtml(year)} 年）` : ''}，每週自動同步。</p>
+    `;
+  }
+
   function calculateStats(records) {
     const total = records.length;
     const avgDays = total
@@ -85,6 +103,12 @@
       : [...new Set(records.map((record) => record.broker).filter(Boolean))].join('、') || '尚無建議服務商';
     const notes = [...new Set(records.map((record) => record.issue_note).filter(Boolean))];
     const forwarders = [...new Set(records.map((record) => record.forwarder).filter(Boolean))];
+    let tradeIndicator = null;
+    try {
+      tradeIndicator = await window.TCIApi.getTradeIndicator(context.country || records[0].country);
+    } catch (error) {
+      tradeIndicator = null;
+    }
 
     element.innerHTML = `
       <div class="risk-line">
@@ -99,6 +123,7 @@
         <div class="stat"><span>平均通關</span><strong>${stats.avgDays} 天</strong></div>
         <div class="stat"><span>成功率</span><strong>${stats.successRate}%</strong></div>
       </div>
+      ${renderTradeIndicator(tradeIndicator)}
       <h3>所需文件</h3>
       <div class="tag-list">${documents.map((doc) => `<span class="tag">${escapeHtml(doc)}</span>`).join('') || '<span class="tag">尚無文件資料</span>'}</div>
       <h3>建議服務商</h3>

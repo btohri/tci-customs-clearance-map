@@ -705,6 +705,37 @@
     }, {});
   }
 
+  // World Bank LPI 指標（由 sync-trade-indicators Edge Function 定時同步）
+  async function getTradeIndicator(country) {
+    const { data, error } = await getClient()
+      .from('country_trade_indicators')
+      .select('*')
+      .eq('country', normalizeCountry(country))
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  }
+
+  // 航線天氣警示（由 sync-weather Edge Function 定時同步）
+  async function getRouteWeatherAlerts() {
+    const { data, error } = await getClient()
+      .from('route_weather_alerts')
+      .select('*');
+    if (error) throw error;
+    return data || [];
+  }
+
+  // 最近同步紀錄（後台監控用）
+  async function getSyncLogs(limit = 20) {
+    const { data, error } = await getClient()
+      .from('sync_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return data || [];
+  }
+
   async function listUserRoleAssignments() {
     const { data, error } = await getClient().rpc('list_user_role_assignments');
     if (error) throw error;
@@ -854,6 +885,9 @@
     updateQuote,
     deleteQuote,
     getCountryRiskSummary,
+    getTradeIndicator,
+    getRouteWeatherAlerts,
+    getSyncLogs,
     listUserRoleAssignments,
     isCurrentUserAdmin,
     assignUserRoleByEmail,

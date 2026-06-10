@@ -1,7 +1,7 @@
 # TCI Customs Clearance Map — V1 專案規格文件
 
 > 本文件供 AI（Cursor / Copilot / Claude）閱讀使用，也作為接手人員的 README。
-> 最後更新：2026-06-02
+> 最後更新：2026-06-10（V1.5：公開資料自動同步，見文末）
 
 ---
 
@@ -22,7 +22,9 @@
 ```
 GitHub Pages（前端）
        ↕ Supabase JS Client
-Supabase（PostgreSQL + Auth）
+Supabase（PostgreSQL + Auth + Edge Functions + pg_cron）
+       ↕ 定時同步（V1.5）
+公開資料：UN/LOCODE（港口）、Open-Meteo（天氣）、World Bank LPI（物流指標）
 ```
 
 ### 選型原因
@@ -393,6 +395,44 @@ export async function getBrokers(country) { ... }
 - `create-user` Edge Function 需要 `SUPABASE_SERVICE_ROLE_KEY`，只能放在 Supabase Function secrets，不可放前端
 - 資料庫 RPC 更新後需執行 `notify pgrst, 'reload schema';`，修補 SQL 已包含此句
 - GitHub repo 建議設為 **private**
+
+---
+
+## V1.5 公開資料自動同步（2026-06-10 新增）
+
+> 部署步驟見 `DEPLOY_V1_5.md`，資料表與排程 SQL 見 `supabase_v1_5_public_data.sql`。
+
+### 架構
+
+```
+pg_cron（排程） → pg_net → Edge Functions → 公開 API → 寫回資料表 → 前端讀取
+```
+
+### Edge Functions
+
+| Function | 資料來源 | 排程 | 寫入表 |
+|----------|---------|------|--------|
+| `sync-ports` | UN/LOCODE 開放資料（GitHub datasets 鏡像） | 每月 1 日 | `ports`（upsert by unlocode） |
+| `sync-weather` | Open-Meteo Forecast + Marine API（免金鑰） | 每 12 小時 | `route_weather_alerts` |
+| `sync-trade-indicators` | World Bank LPI API（免金鑰） | 每週一 | `country_trade_indicators` |
+
+### 新增資料表
+
+- `country_trade_indicators`：各國 LPI 海關效率／整體物流／基礎建設／時效性分數（1~5）
+- `route_weather_alerts`：每條航線起點/終點/中途點的未來 5 天最大陣風與浪高，含 green/yellow/red 警示
+- `sync_logs`：每次同步的成功/失敗紀錄
+
+### 前端整合
+
+- `api.js`：新增 `getTradeIndicator(country)`、`getRouteWeatherAlerts()`、`getSyncLogs()`
+- `search.js`：查詢結果加入「World Bank 物流指標」區塊（海關效率／整體物流／時效性）
+- `map.js`：國家側欄顯示 LPI 摘要；航線卡片與航線 popup 顯示天氣警示
+
+### 注意事項
+
+- World Bank 無台灣資料，台灣的 LPI 區塊自動隱藏
+- 警示門檻：紅 = 陣風 ≥ 88 km/h 或浪高 ≥ 6 m；黃 = 陣風 ≥ 62 km/h 或浪高 ≥ 4 m
+- 手動維護的港口（無 unlocode）不受自動同步影響
 
 ---
 
