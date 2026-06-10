@@ -72,12 +72,73 @@
     return result;
   }
 
+  function routeEndpoint(route, side) {
+    const lat = Number(route[`${side}_lat`]);
+    const lng = Number(route[`${side}_lng`]);
+    return Number.isFinite(lat) && Number.isFinite(lng) ? [lat, lng] : null;
+  }
+
+  function routeCountry(route, side) {
+    return normalizeCountryName(route[`${side}_country`]);
+  }
+
+  function routePortKey(route, side) {
+    return String(route[`${side}_port`] || '').toLowerCase();
+  }
+
+  function isTaiwanEndpoint(route, side) {
+    return routeCountry(route, side) === 'Taiwan';
+  }
+
+  function isNorthAmericaWestCoastEndpoint(route, side) {
+    const country = routeCountry(route, side);
+    const port = routePortKey(route, side);
+    return (
+      (country === 'USA' && /(los angeles|long beach|la|seattle|tacoma|oakland)/i.test(port)) ||
+      (country === 'Canada' && /(vancouver|prince rupert)/i.test(port))
+    );
+  }
+
+  function buildTaiwanToWestCoastSeaLane(route) {
+    const origin = routeEndpoint(route, 'origin');
+    const destination = routeEndpoint(route, 'destination');
+    if (!origin || !destination) return [];
+
+    const taiwanToAmerica = isTaiwanEndpoint(route, 'origin') && isNorthAmericaWestCoastEndpoint(route, 'destination');
+    const americaToTaiwan = isNorthAmericaWestCoastEndpoint(route, 'origin') && isTaiwanEndpoint(route, 'destination');
+    if (!taiwanToAmerica && !americaToTaiwan) return [];
+
+    const taiwanSide = taiwanToAmerica ? origin : destination;
+    const americaSide = taiwanToAmerica ? destination : origin;
+    const pacificLane = [
+      taiwanSide,
+      [21.4, 122.2],
+      [20.2, 126.8],
+      [23.8, 139.5],
+      [30.5, 158.0],
+      [35.8, 176.0],
+      [38.2, -166.0],
+      [37.4, -148.0],
+      [35.2, -132.0],
+      americaSide
+    ];
+    return taiwanToAmerica ? pacificLane : pacificLane.reverse();
+  }
+
+  function buildOceanLane(route) {
+    if (route.transport_mode !== 'ocean') return [];
+    return buildTaiwanToWestCoastSeaLane(route);
+  }
+
   function normalizeRoutePath(route) {
     const path = Array.isArray(route.route_path) ? route.route_path : [];
     const validPath = path
       .map((point) => Array.isArray(point) ? point : [point.lat, point.lng])
       .filter((point) => point.length === 2 && point.every((item) => Number.isFinite(Number(item))))
       .map((point) => [Number(point[0]), Number(point[1])]);
+    if (validPath.length > 2) return unwrapPath(validPath);
+    const oceanLane = buildOceanLane(route);
+    if (oceanLane.length >= 2) return unwrapPath(oceanLane);
     if (validPath.length >= 2) return unwrapPath(validPath);
     return unwrapPath([
       [Number(route.origin_lat), Number(route.origin_lng)],
